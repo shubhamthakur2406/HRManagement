@@ -17,7 +17,7 @@
   },
   {
     "ContainingType": "AdminController",
-    "Method": "GetNotifications",
+    "Method": "GetAllNotifications",
     "RelativePath": "api/admin/notifications",
     "HttpMethod": "GET",
     "IsController": true,

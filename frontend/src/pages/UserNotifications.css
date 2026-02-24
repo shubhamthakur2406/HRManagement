@@ -1,52 +1,79 @@
-/* Page container */
-.notifications-page {
-  padding: 30px;
-  max-width: 900px;
-  margin: auto;
+/* Background */
+.dashboard-container {
+  min-height: 100vh;
+  background: linear-gradient(to right, #f3f4f6, #e5e7eb);
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
 }
 
-/* Page heading */
-.notifications-page h2 {
-  margin-bottom: 20px;
-  font-size: 26px;
-  font-weight: bold;
-}
-
-/* Notification card */
-.notification-card {
+/* Main Card */
+.dashboard-card {
+  width: 100%;
+  max-width: 800px;
   background: #ffffff;
-  border-radius: 10px;
-  padding: 20px 25px;
-  margin-bottom: 18px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Hover effect */
-.notification-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
 }
 
 /* Title */
-.notification-title {
+.dashboard-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #111827;
+}
+
+/* Notification Heading */
+.notification-heading {
   font-size: 20px;
   font-weight: 600;
-  color: #4b3fcf;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  color: #374151;
+}
+
+/* Notification Card */
+.notification-card {
+  background: #f9fafb;
+  padding: 18px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* Hover Effect */
+.notification-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+}
+
+/* Title */
+.notification-card h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #111827;
 }
 
 /* Message */
-.notification-message {
-  font-size: 15px;
-  color: #333;
-  line-height: 1.6;
-  margin-bottom: 12px;
+.notification-card p {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 8px;
 }
 
 /* Date */
-.notification-date {
+.notification-card span {
   font-size: 12px;
-  color: #777;
-  text-align: right;
+  color: #9ca3af;
+}
+
+/* No Notification Text */
+.no-notification {
+  color: #6b7280;
+  font-size: 14px;
 }

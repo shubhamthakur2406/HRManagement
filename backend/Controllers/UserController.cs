@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
+
 [ApiController]
 [Route("api/user")]
 [Authorize(Roles = "User")]
@@ -16,6 +17,26 @@ public class UserController : ControllerBase
     {
         _context = context;
     }
+
+    // 🔔 GET NOTIFICATIONS (Dashboard Load)
+    [HttpGet("notifications")]
+    public IActionResult GetNotifications()
+    {
+        var notifications = _context.Notifications
+            .Where(n => !n.IsDeleted)
+            .OrderByDescending(n => n.CreatedAt)
+            .Select(n => new
+            {
+                n.Id,
+                n.Title,
+                n.Message,
+                n.RedirectUrl,
+                n.CreatedAt
+            })
+            .ToList();
+
+        return Ok(notifications);
+    }   
 
 
     // 🔹 Get own profile
@@ -89,16 +110,18 @@ public class UserController : ControllerBase
         return Ok(new { message = "Password changed successfully" });
     }
 
-    // 🔔 GET NOTIFICATIONS (USER)
-    [HttpGet("notifications")]
-    public IActionResult GetNotifications()
-    {
-        var notifications = _context.Notifications
-            .Where(n => !n.IsDeleted)
-            .OrderByDescending(n => n.CreatedAt)
-            .ToList();
+    //// 🔔 GET NOTIFICATIONS (USER)
+    //[HttpGet("notifications")]
+    //public IActionResult GetNotifications()
+    //{
+    //    var notifications = _context.Notifications
+    //        .Where(n => !n.IsDeleted)
+    //        .OrderByDescending(n => n.CreatedAt)
+    //        .ToList();
 
-        return Ok(notifications);
-    }
+    //    return Ok(notifications);
+    //}
 
+
+   
 }

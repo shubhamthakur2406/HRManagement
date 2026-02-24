@@ -1,8 +1,12 @@
 ﻿using backend.Data;
 using backend.DTOs;
+using backend.Hubs;
 using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+
 
 [ApiController]
 [Route("api/admin")]
@@ -10,10 +14,94 @@ using Microsoft.AspNetCore.Mvc;
 public class AdminController : ControllerBase
 {
     private readonly AuthDbContext _context;
+    private readonly IHubContext<NotificationHub> _hub;
 
-    public AdminController(AuthDbContext context)
+    public AdminController(AuthDbContext context,
+                           IHubContext<NotificationHub> hub)
     {
         _context = context;
+        _hub = hub;
+    }
+
+    // 🔔 CREATE NOTIFICATION
+    [HttpPost("notifications")]
+    public async Task<IActionResult> CreateNotification(NotificationDto dto)
+    {
+        var notification = new Notification
+        {
+            Title = dto.Title,
+            Message = dto.Message,
+            RedirectUrl = dto.RedirectUrl,
+            CreatedAt = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        // 1️⃣ Save in DB (for everyone)
+        _context.Notifications.Add(notification);
+        await _context.SaveChangesAsync();
+
+        // 2️⃣ Send real-time to logged-in users only
+        await _hub.Clients.Group("User")
+            .SendAsync("ReceiveNotification", notification);
+
+        return Ok(notification);
+    }
+
+    // 🔔 GET ALL NOTIFICATIONS (Admin View)
+    [HttpGet("notifications")]
+    public IActionResult GetAllNotifications()
+    {
+        var notifications = _context.Notifications
+            .Where(n => !n.IsDeleted)
+            .OrderByDescending(n => n.CreatedAt)
+            .ToList();
+
+        return Ok(notifications);
+    }
+
+    // ✏️ UPDATE NOTIFICATION
+    [HttpPut("notifications/{id}")]
+    public async Task<IActionResult> UpdateNotification(int id, NotificationDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var notification = await _context.Notifications
+            .FirstOrDefaultAsync(n => n.Id == id && !n.IsDeleted);
+
+        if (notification == null)
+            return NotFound("Notification not found");
+
+        notification.Title = dto.Title;
+        notification.Message = dto.Message;
+        notification.RedirectUrl = dto.RedirectUrl;
+
+        await _context.SaveChangesAsync();
+
+        // 🔥 Optional: notify users that notification was updated
+        await _hub.Clients.Group("User")
+            .SendAsync("ReceiveNotification", notification);
+
+        return Ok(notification);
+    }
+
+    // 🗑️ SOFT DELETE
+    [HttpDelete("notifications/{id}")]
+    public async Task<IActionResult> DeleteNotification(int id)
+    {
+        var notification = _context.Notifications
+            .FirstOrDefault(n => n.Id == id && !n.IsDeleted);
+
+        if (notification == null)
+            return NotFound();
+
+        notification.IsDeleted = true;
+        await _context.SaveChangesAsync();
+
+        await _hub.Clients.Group("User")
+            .SendAsync("DeleteNotification", id);
+
+        return Ok("Deleted successfully");
     }
 
     // ✅ GET ALL USERS WITH PAGINATION
@@ -166,66 +254,67 @@ public class AdminController : ControllerBase
         return Ok("User deleted successfully");
     }
 
-    // 🔔 CREATE NOTIFICATION
-    [HttpPost("notifications")]
-    public IActionResult CreateNotification(NotificationDto dto)
-    {
-        var notification = new Notification
-        {
-            Title = dto.Title,
-            Message = dto.Message
-        };
+    //// 🔔 CREATE NOTIFICATION
+    //[HttpPost("notifications")]
+    //public IActionResult CreateNotification(NotificationDto dto)
+    //{
+    //    var notification = new Notification
+    //    {
+    //        Title = dto.Title,
+    //        Message = dto.Message
+    //    };
 
-        _context.Notifications.Add(notification);
-        _context.SaveChanges();
+    //    _context.Notifications.Add(notification);
+    //    _context.SaveChanges();
 
-        return Ok("Notification created");
-    }
+    //    return Ok("Notification created");
+    //}
 
-    // 🔔 GET ALL NOTIFICATIONS (ADMIN)
-    [HttpGet("notifications")]
-    public IActionResult GetNotifications()
-    {
-        var notifications = _context.Notifications
-            .Where(n => !n.IsDeleted)
-            .OrderByDescending(n => n.CreatedAt)
-            .ToList();
+    //// 🔔 GET ALL NOTIFICATIONS (ADMIN)
+    //[HttpGet("notifications")]
+    //public IActionResult GetNotifications()
+    //{
+    //    var notifications = _context.Notifications
+    //        .Where(n => !n.IsDeleted)
+    //        .OrderByDescending(n => n.CreatedAt)
+    //        .ToList();
 
-        return Ok(notifications);
-    }
+    //    return Ok(notifications);
+    //}
 
-    // ✏️ UPDATE NOTIFICATION
-    [HttpPut("notifications/{id}")]
-    public IActionResult UpdateNotification(int id, NotificationDto dto)
-    {
-        var notification = _context.Notifications
-            .FirstOrDefault(n => n.Id == id && !n.IsDeleted);
+    //// ✏️ UPDATE NOTIFICATION
+    //[HttpPut("notifications/{id}")]
+    //public IActionResult UpdateNotification(int id, NotificationDto dto)
+    //{
+    //    var notification = _context.Notifications
+    //        .FirstOrDefault(n => n.Id == id && !n.IsDeleted);
 
-        if (notification == null)
-            return NotFound();
+    //    if (notification == null)
+    //        return NotFound();
 
-        notification.Title = dto.Title;
-        notification.Message = dto.Message;
+    //    notification.Title = dto.Title;
+    //    notification.Message = dto.Message;
 
-        _context.SaveChanges();
+    //    _context.SaveChanges();
 
-        return Ok("Notification updated");
-    }
+    //    return Ok("Notification updated");
+    //}
 
-    // 🗑️ DELETE NOTIFICATION (SOFT DELETE)
-    [HttpDelete("notifications/{id}")]
-    public IActionResult DeleteNotification(int id)
-    {
-        var notification = _context.Notifications
-            .FirstOrDefault(n => n.Id == id && !n.IsDeleted);
+    //// 🗑️ DELETE NOTIFICATION (SOFT DELETE)
+    //[HttpDelete("notifications/{id}")]
+    //public IActionResult DeleteNotification(int id)
+    //{
+    //    var notification = _context.Notifications
+    //        .FirstOrDefault(n => n.Id == id && !n.IsDeleted);
 
-        if (notification == null)
-            return NotFound();
+    //    if (notification == null)
+    //        return NotFound();
 
-        notification.IsDeleted = true;
-        _context.SaveChanges();
+    //    notification.IsDeleted = true;
+    //    _context.SaveChanges();
 
-        return Ok("Notification deleted");
-    }
+    //    return Ok("Notification deleted");
+    //}
+    
 
 }

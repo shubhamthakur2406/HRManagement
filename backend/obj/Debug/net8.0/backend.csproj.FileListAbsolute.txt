@@ -26,8 +26,11 @@ C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.C
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.DependencyModel.dll
+C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.Abstractions.dll
+C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.Hosting.Abstractions.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.ObjectPool.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Identity.Client.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Identity.Client.Extensions.Msal.dll
@@ -41,6 +44,9 @@ C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.OpenApi.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.SqlServer.Server.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Mono.TextTemplating.dll
+C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Newtonsoft.Json.dll
+C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Npgsql.dll
+C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
@@ -55,6 +61,7 @@ C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\System.Configuration.C
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\System.Drawing.Common.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\System.Memory.Data.dll
+C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\System.Net.WebSockets.WebSocketProtocol.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\System.Runtime.Caching.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
 C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\System.Security.Permissions.dll
@@ -131,6 +138,7 @@ C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\backend.AssemblyInfo.c
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\backend.csproj.CoreCompileInputs.cache
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\backend.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\backend.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\backend.sourcelink.json
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
@@ -147,6 +155,3 @@ C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\refint\backend.dll
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\backend.pdb
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\backend.genruntimeconfig.cache
 C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\ref\backend.dll
-C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Npgsql.dll
-C:\Users\Testing\Desktop\project\backend\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
-C:\Users\Testing\Desktop\project\backend\obj\Debug\net8.0\backend.sourcelink.json
