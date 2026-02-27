@@ -1,109 +1,337 @@
+/* ================= PAGE WRAPPER ================= */
+
 .admin-wrapper {
   min-height: 100vh;
-  background: linear-gradient(to right, #eef2ff, #e0e7ff);
-  padding: 40px 20px;
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  padding: 50px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+/* ================= FORM CARD ================= */
+
 .admin-card {
   width: 100%;
-  max-width: 600px;
+  max-width: 700px;
   background: #ffffff;
-  padding: 30px;
-  border-radius: 14px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-  margin-bottom: 40px;
+  padding: 35px;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.08);
+  margin-bottom: 50px;
+  transition: 0.3s ease;
+}
+
+.admin-card:hover {
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.12);
 }
 
 .admin-card h2 {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  font-weight: 600;
+  font-size: 22px;
+  color: #1f2937;
 }
+
+/* ================= INPUTS ================= */
 
 .admin-card input,
 .admin-card textarea {
   width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  padding: 13px 14px;
+  margin-bottom: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   font-size: 14px;
+  background: #f9fafb;
+  transition: all 0.25s ease;
+}
+
+.admin-card input:focus,
+.admin-card textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .admin-card textarea {
-  min-height: 100px;
+  min-height: 110px;
+  resize: vertical;
 }
+
+.admin-card label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+  color: #374151;
+}
+
+/* ================= CHECKBOX ================= */
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  margin-bottom: 18px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.checkbox-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
+
+/* ================= BUTTON ================= */
 
 .admin-card button {
   width: 100%;
-  padding: 12px;
-  background: #2563eb;
+  padding: 14px;
+  margin-top: 15px;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.3s ease;
 }
 
 .admin-card button:hover {
-  background: #1e40af;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(37, 99, 235, 0.35);
 }
 
-/* Notification List */
+/* ================= LIST SECTION ================= */
+
 .admin-list {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
 }
 
 .admin-list h3 {
-  margin-bottom: 20px;
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: #1e293b;
 }
+
+/* ================= NOTIFICATION CARD ================= */
 
 .admin-notification-card {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  display: flex;
-  justify-content: space-between;
+  background: #ffffff;
+  padding: 24px 30px;
+  border-radius: 20px;
+  margin-bottom: 22px;
+
+  display: grid;
+  grid-template-columns: 2.5fr 1fr auto;
   align-items: center;
+  gap: 25px;
+
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.07);
+  transition: 0.3s ease;
 }
 
-.admin-notification-card h4 {
-  margin-bottom: 6px;
+.admin-notification-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.12);
 }
 
-.admin-notification-card p {
+/* TEXT SECTION */
+
+.notification-content h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.notification-content p {
+  margin: 6px 0 0 0;
   font-size: 14px;
   color: #4b5563;
 }
 
-.admin-notification-card small {
-  font-size: 12px;
-  color: #9ca3af;
+/* DATE */
+
+.notification-date {
+  font-size: 13px;
+  color: #6b7280;
+  text-align: right;
 }
+
+/* ACTION BUTTONS */
 
 .action-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .edit-btn {
-  background: #facc15;
+  background: linear-gradient(135deg, #facc15, #eab308);
   border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-weight: 500;
   cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.edit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(234, 179, 8, 0.4);
 }
 
 .delete-btn {
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 9px 18px;
+  border-radius: 12px;
   color: white;
+  font-weight: 500;
   cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.delete-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.4);
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  .admin-notification-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .notification-date {
+    text-align: left;
+  }
+
+  .action-buttons {
+    justify-content: flex-start;
+  }
+}
+
+/* ================= CENTER TOAST ================= */
+
+.toast {
+  position: fixed;
+  top: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 16px 30px;
+  border-radius: 14px;
+  font-weight: 500;
+  font-size: 15px;
+  color: white;
+  z-index: 9999;
+  min-width: 320px;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.35s ease;
+}
+
+.toast.success {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+
+.toast.error {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -25px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ================= MODERN BLUR MODAL ================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modern-modal {
+  background: #ffffff;
+  width: 420px;
+  padding: 35px;
+  border-radius: 22px;
+  text-align: center;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.25);
+  animation: popIn 0.25s ease;
+}
+
+.modal-icon {
+  font-size: 42px;
+  margin-bottom: 15px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

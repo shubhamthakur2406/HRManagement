@@ -1,9 +1,12 @@
 ﻿using backend.Data;
 using backend.DTOs;
+using backend.Hubs;
 using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+
 
 
 [ApiController]
@@ -18,25 +21,74 @@ public class UserController : ControllerBase
         _context = context;
     }
 
-    // 🔔 GET NOTIFICATIONS (Dashboard Load)
     [HttpGet("notifications")]
-    public IActionResult GetNotifications()
+    public async Task<IActionResult> GetUserNotifications()
     {
-        var notifications = _context.Notifications
-            .Where(n => !n.IsDeleted)
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        var departmentId = await _context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => u.DepartmentId)
+            .FirstOrDefaultAsync();
+
+        var notifications = await _context.Notifications
+            .Where(n => !n.IsDeleted &&
+                (
+                    _context.NotificationUsers
+                        .Any(nu => nu.NotificationId == n.Id && nu.UserId == userId)
+                    ||
+                    _context.NotificationDepartments
+                        .Any(nd => nd.NotificationId == n.Id && nd.DepartmentId == departmentId)
+                    ||
+                    n.NotificationUsers.Count == 0 && n.NotificationDepartments.Count == 0
+                ))
             .OrderByDescending(n => n.CreatedAt)
-            .Select(n => new
-            {
-                n.Id,
-                n.Title,
-                n.Message,
-                n.RedirectUrl,
-                n.CreatedAt
-            })
-            .ToList();
+            .ToListAsync();
 
         return Ok(notifications);
-    }   
+    }
+
+    //[HttpGet("notifications")]
+    //public IActionResult GetNotifications()
+    //{
+    //    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+    //    var departmentId = _context.Users
+    //        .Where(u => u.Id == userId)
+    //        .Select(u => u.DepartmentId)
+    //        .FirstOrDefault();
+
+    //    var notifications = _context.Notifications
+    //        .Where(n => !n.IsDeleted &&
+    //            (
+    //                _context.NotificationUsers.Any(nu => nu.NotificationId == n.Id && nu.UserId == userId)
+    //                ||
+    //                _context.NotificationDepartments.Any(nd => nd.NotificationId == n.Id && nd.DepartmentId == departmentId)
+    //            ))
+    //        .OrderByDescending(n => n.CreatedAt)
+    //        .ToList();
+
+    //    return Ok(notifications);
+    //}
+
+    //// 🔔 GET NOTIFICATIONS (Dashboard Load)
+    //[HttpGet("notifications")]
+    //public IActionResult GetNotifications()
+    //{
+    //    var notifications = _context.Notifications
+    //        .Where(n => !n.IsDeleted)
+    //        .OrderByDescending(n => n.CreatedAt)
+    //        .Select(n => new
+    //        {
+    //            n.Id,
+    //            n.Title,
+    //            n.Message,
+    //            n.RedirectUrl,
+    //            n.CreatedAt
+    //        })
+    //        .ToList();
+
+    //    return Ok(notifications);
+    //}   
 
 
     // 🔹 Get own profile

@@ -491,24 +491,37 @@
         "additionalProperties": false
       },
       "NotificationDto": {
-        "required": [
-          "message",
-          "title"
-        ],
         "type": "object",
         "properties": {
           "title": {
-            "maxLength": 200,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "message": {
-            "maxLength": 1000,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "redirectUrl": {
             "type": "string",
+            "nullable": true
+          },
+          "sendToAll": {
+            "type": "boolean"
+          },
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "departmentIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
             "nullable": true
           }
         },

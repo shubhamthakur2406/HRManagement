@@ -1,122 +1,74 @@
 import { useEffect, useState } from "react";
 import axios from "../api/axiosInstance";
+import "./AdminUserSearch.css";
 
 function AdminUserSearch() {
   const [name, setName] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [users, setUsers] = useState([]);
-
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
   const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  /* 🔹 FETCH DEPARTMENTS */
+  /* ================= FETCH DEPARTMENTS ================= */
   useEffect(() => {
-    axios.get("/departments").then(res => setDepartments(res.data));
+    axios.get("/departments")
+      .then(res => setDepartments(res.data))
+      .catch(err => console.error(err));
   }, []);
 
-  /* 🔹 REAL-TIME NAME SUGGESTIONS (FAST – 300ms) */
+  /* ================= LOAD USERS ================= */
   useEffect(() => {
-    if (name.trim() === "") {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
 
-    const timer = setTimeout(() => {
-      axios
-        .get("/admin/users/suggestions", {
-          params: { query: name }
-        })
-        .then(res => {
-          setSuggestions(res.data);
-          setShowSuggestions(true);
-        });
-    }, 300); // 👈 FAST suggestions
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
 
-    return () => clearTimeout(timer);
-  }, [name]);
+        // If no search text → load ALL users
+        if (name.trim() === "") {
+          const res = await axios.get("/admin/users");
+          setUsers(res.data.users || res.data);
+          setLoading(false);
+          return;
+        }
 
-  /* 🔥 AUTO SEARCH AFTER USER STOPS TYPING (3 SECONDS) */
-  useEffect(() => {
-    if (name.trim() === "") {
-      setUsers([]);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      axios
-        .get("/admin/users/search", {
+        // If search text exists → search API
+        const res = await axios.get("/admin/users/search", {
           params: {
             name,
             departmentId: departmentId || null
           }
-        })
-        .then(res => {
-          setUsers(res.data);
-          setShowSuggestions(false);
         });
-    }, 100); // 👈 1 SECONDS DELAY
 
-    return () => clearTimeout(timer);
+        setUsers(res.data);
+        setLoading(false);
+
+      } catch (error) {
+        console.error("Error loading users:", error);
+        setUsers([]);
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+
   }, [name, departmentId]);
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="search-page">
       <h2>Search Users</h2>
 
-      {/* 🔎 SEARCH CONTROLS */}
-      <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-        {/* NAME INPUT */}
-        <div style={{ position: "relative", width: "250px" }}>
-          <input
-            placeholder="Search by name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            onFocus={() => setShowSuggestions(true)}
-          />
+      {/* SEARCH CONTROLS */}
+      <div className="search-controls">
 
-          {/* 🔽 AUTOCOMPLETE DROPDOWN */}
-        {showSuggestions && suggestions.length > 0 && users.length === 0 && (
-          <ul
-            style={{
-              position: "absolute",
-              top: "38px",
-              left: 0,
-              right: 0,
-              background: "white",
-              border: "1px solid #ccc",
-              listStyle: "none",
-              padding: 0,
-              margin: 0,
-              maxHeight: "150px",
-              overflowY: "auto",
-              zIndex: 10
-            }}
-          >
-            {suggestions.map((s, i) => (
-              <li
-                key={i}
-                style={{
-                  padding: "8px",
-                  cursor: "pointer"
-                }}
-                onClick={() => {
-                  setName(s);
-                  setShowSuggestions(false);
-                }}
-              >
-                {s}
-              </li>
-            ))}
-          </ul>
-        )}
+        <input
+          className="search-input"
+          placeholder="Search by name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+        />
 
-        </div>
-
-        {/* DEPARTMENT FILTER */}
         <select
+          className="search-select"
           value={departmentId}
           onChange={e => setDepartmentId(e.target.value)}
         >
@@ -129,35 +81,41 @@ function AdminUserSearch() {
         </select>
       </div>
 
-      <br />
-
-      {/* 📋 SEARCH RESULTS */}
-      <table border="1" cellPadding="8" width="100%">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Department</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.length === 0 ? (
+      {/* TABLE */}
+      <div className="search-table-wrapper">
+        <table className="search-table">
+          <thead>
             <tr>
-              <td colSpan="3" align="center">
-                No results
-              </td>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Department</th>
             </tr>
-          ) : (
-            users.map(u => (
-              <tr key={u.id}>
-                <td>{u.fullName}</td>
-                <td>{u.email}</td>
-                <td>{u.departmentName}</td>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="3" className="no-results">
+                  Loading...
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : users.length === 0 ? (
+              <tr>
+                <td colSpan="3" className="no-results">
+                  No users found
+                </td>
+              </tr>
+            ) : (
+              users.map(u => (
+                <tr key={u.id}>
+                  <td>{u.fullName}</td>
+                  <td>{u.email}</td>
+                  <td>{u.departmentName}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

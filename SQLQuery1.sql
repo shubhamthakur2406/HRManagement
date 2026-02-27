@@ -31,3 +31,19 @@ CREATE TABLE Notifications (
     IsDeleted BIT NOT NULL DEFAULT 0,
     CreatedAt DATETIME NOT NULL DEFAULT GETUTCDATE()
 );
+CREATE TABLE NotificationUsers (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    NotificationId INT NOT NULL,
+    UserId INT NOT NULL,
+    FOREIGN KEY (NotificationId) REFERENCES Notifications(Id),
+    FOREIGN KEY (UserId) REFERENCES Users(Id)
+);
+CREATE TABLE NotificationDepartments (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    NotificationId INT NOT NULL,
+    DepartmentId INT NOT NULL,
+    FOREIGN KEY (NotificationId) REFERENCES Notifications(Id),
+    FOREIGN KEY (DepartmentId) REFERENCES Departments(Id)
+);
+ALTER TABLE Notifications
+ADD SendToAll BIT NOT NULL DEFAULT 0;

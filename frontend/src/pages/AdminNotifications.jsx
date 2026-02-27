@@ -1,197 +1,130 @@
-// import { useEffect, useState } from "react";
-// import axios from "../api/axiosInstance";
-// import "./AdminNotifications.css";
 
-// function AdminNotifications() {
-//   const [title, setTitle] = useState("");
-//   const [message, setMessage] = useState("");
-//   const [notifications, setNotifications] = useState([]);
-
-//   const [editingId, setEditingId] = useState(null);
-
-//   // 🔴 DELETE MODAL STATE
-//   const [showConfirm, setShowConfirm] = useState(false);
-//   const [deleteId, setDeleteId] = useState(null);
-
-//   /* 🔹 LOAD NOTIFICATIONS */
-//   const loadNotifications = async () => {
-//     const res = await axios.get("/admin/notifications");
-//     setNotifications(res.data);
-//   };
-
-//   useEffect(() => {
-//     loadNotifications();
-//   }, []);
-
-//   /* ✅ POST OR UPDATE */
-//   const submitNotification = async () => {
-//     if (!title || !message) {
-//       alert("Title and message required");
-//       return;
-//     }
-
-//     if (editingId) {
-//       await axios.put(`/admin/notifications/${editingId}`, {
-//         title,
-//         message
-//       });
-//     } else {
-//       await axios.post("/admin/notifications", {
-//         title,
-//         message
-//       });
-//     }
-
-//     resetForm();
-//     loadNotifications();
-//   };
-
-//   /* ✏️ EDIT */
-//   const editNotification = (n) => {
-//     setEditingId(n.id);
-//     setTitle(n.title);
-//     setMessage(n.message);
-//   };
-
-//   /* 🗑 OPEN DELETE MODAL */
-//   const openDeleteModal = (id) => {
-//     setDeleteId(id);
-//     setShowConfirm(true);
-//   };
-
-//   /* ✅ CONFIRM DELETE */
-//   const confirmDelete = async () => {
-//     await axios.delete(`/admin/notifications/${deleteId}`);
-//     setShowConfirm(false);
-//     setDeleteId(null);
-//     loadNotifications();
-//   };
-
-//   /* ❌ CANCEL DELETE */
-//   const cancelDelete = () => {
-//     setShowConfirm(false);
-//     setDeleteId(null);
-//   };
-
-//   /* ❌ RESET FORM */
-//   const resetForm = () => {
-//     setEditingId(null);
-//     setTitle("");
-//     setMessage("");
-//   };
-
-//   return (
-//     <div className="notifications-page">
-//       {/* FORM */}
-//       <div className="post-card">
-//         <h2>{editingId ? "Edit Notification" : "Post Notification"}</h2>
-
-//         <input
-//           placeholder="Title"
-//           value={title}
-//           onChange={e => setTitle(e.target.value)}
-//         />
-
-//         <textarea
-//           placeholder="Message"
-//           value={message}
-//           onChange={e => setMessage(e.target.value)}
-//         />
-
-//         <div className="btn-group">
-//           <button className="btn-primary" onClick={submitNotification}>
-//             {editingId ? "Update" : "Post"}
-//           </button>
-
-//           {editingId && (
-//             <button className="btn-secondary" onClick={resetForm}>
-//               Cancel
-//             </button>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* LIST */}
-//       <div className="list-card">
-//         <h2>All Notifications</h2>
-
-//         {notifications.length === 0 ? (
-//           <p>No notifications</p>
-//         ) : (
-//           notifications.map(n => (
-//             <div key={n.id} className="notification-item">
-//               <h3>{n.title}</h3>
-//               <p>{n.message}</p>
-
-//               <div className="item-actions">
-//                 <button
-//                   className="btn-edit"
-//                   onClick={() => editNotification(n)}
-//                 >
-//                   Edit
-//                 </button>
-
-//                 <button
-//                   className="btn-danger"
-//                   onClick={() => openDeleteModal(n.id)}
-//                 >
-//                   Delete
-//                 </button>
-//               </div>
-//             </div>
-//           ))
-//         )}
-//       </div>
-
-//       {/* 🔥 DELETE CONFIRM MODAL */}
-//       {showConfirm && (
-//         <div className="modal-overlay">
-//           <div className="modal-box">
-//             <h3>Delete Notification</h3>
-//             <p>Are you sure you want to delete this notification?</p>
-
-//             <div className="modal-actions">
-//               <button className="btn-danger" onClick={confirmDelete}>
-//                 Delete
-//               </button>
-//               <button className="btn-secondary" onClick={cancelDelete}>
-//                 Cancel
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-// export default AdminNotifications;
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import Select from "react-select";
+import * as signalR from "@microsoft/signalr";
 import "./AdminNotifications.css";
 
 const AdminNotification = () => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("");
+
+  const [sendToAll, setSendToAll] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+
+  const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [editId, setEditId] = useState(null);
 
+  // Toast
+  const [toast, setToast] = useState({ message: "", type: "" });
+
+  // Delete Modal
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const formRef = useRef(null);
   const token = localStorage.getItem("token");
 
-  // 🔹 Fetch all notifications
-  const fetchNotifications = async () => {
-    const res = await fetch("https://localhost:7130/api/admin/notifications", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    setNotifications(data);
+  // ================= TOAST =================
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast({ message: "", type: "" });
+    }, 3000);
   };
+
+  // ================= ESC KEY SUPPORT =================
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowConfirm(false);
+        setDeleteId(null);
+      }
+    };
+
+    if (showConfirm) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showConfirm]);
+
+  // ================= SIGNALR =================
+
+  useEffect(() => {
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("https://localhost:7130/notificationHub", {
+        accessTokenFactory: () => token
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start().catch(console.error);
+
+    connection.on("ReceiveNotification", (notification) => {
+      setNotifications((prev) => {
+        const exists = prev.find((n) => n.id === notification.id);
+        if (exists) {
+          return prev.map((n) =>
+            n.id === notification.id ? notification : n
+          );
+        }
+        return [notification, ...prev];
+      });
+    });
+
+    return () => connection.stop();
+  }, []);
+
+  // ================= FETCH =================
 
   useEffect(() => {
     fetchNotifications();
+    fetchUsers();
+    fetchDepartments();
   }, []);
 
-  // 🔹 Create or Update
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch(
+        "https://localhost:7130/api/admin/notifications",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      setNotifications(data);
+    } catch {
+      showToast("Failed to load notifications ❌", "error");
+    }
+  };
+
+  const fetchUsers = async () => {
+    const res = await fetch(
+      "https://localhost:7130/api/admin/users",
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    setUsers(data.users);
+  };
+
+  const fetchDepartments = async () => {
+    const res = await fetch(
+      "https://localhost:7130/api/departments",
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    setDepartments(data);
+  };
+
+  // ================= SUBMIT =================
+
   const handleSubmit = async () => {
     const url = editId
       ? `https://localhost:7130/api/admin/notifications/${editId}`
@@ -199,47 +132,152 @@ const AdminNotification = () => {
 
     const method = editId ? "PUT" : "POST";
 
-    await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ title, message, redirectUrl })
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title,
+          message,
+          redirectUrl,
+          sendToAll,
+          userIds: selectedUsers,
+          departmentIds: selectedDepartments
+        })
+      });
 
+      if (!res.ok) {
+        showToast("Operation failed ❌", "error");
+        return;
+      }
+
+      const updatedNotification = await res.json();
+
+      setNotifications((prev) => {
+        const exists = prev.find((n) => n.id === updatedNotification.id);
+        if (exists) {
+          return prev.map((n) =>
+            n.id === updatedNotification.id ? updatedNotification : n
+          );
+        }
+        return [updatedNotification, ...prev];
+      });
+
+      showToast(
+        editId
+          ? "Notification Updated Successfully ✅"
+          : "Notification Created Successfully ✅",
+        "success"
+      );
+
+      resetForm();
+    } catch {
+      showToast("Server error ❌", "error");
+    }
+  };
+
+  const resetForm = () => {
     setTitle("");
     setMessage("");
     setRedirectUrl("");
+    setSendToAll(false);
+    setSelectedUsers([]);
+    setSelectedDepartments([]);
     setEditId(null);
-    fetchNotifications();
   };
 
-  // 🔹 Edit
+  // ================= EDIT =================
+
   const handleEdit = (n) => {
     setTitle(n.title);
     setMessage(n.message);
     setRedirectUrl(n.redirectUrl || "");
+    setSendToAll(n.sendToAll || false);
+    setSelectedUsers(n.userIds || []);
+    setSelectedDepartments(n.departmentIds || []);
     setEditId(n.id);
+
+    formRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   };
 
-  // 🔹 Delete
-  const handleDelete = async (id) => {
-    await fetch(
-      `https://localhost:7130/api/admin/notifications/${id}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
+  // ================= DELETE =================
+
+  const openDeleteModal = (id) => {
+    setDeleteId(id);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      const res = await fetch(
+        `https://localhost:7130/api/admin/notifications/${deleteId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (!res.ok) {
+        showToast("Delete failed ❌", "error");
+        setIsDeleting(false);
+        return;
       }
-    );
 
-    fetchNotifications();
+      setNotifications((prev) =>
+        prev.filter((n) => n.id !== deleteId)
+      );
+
+      showToast("Notification Deleted Successfully 🗑️", "success");
+
+      setShowConfirm(false);
+      setDeleteId(null);
+    } catch {
+      showToast("Server error ❌", "error");
+    }
+
+    setIsDeleting(false);
   };
+
+  const cancelDelete = () => {
+    if (!isDeleting) {
+      setShowConfirm(false);
+      setDeleteId(null);
+    }
+  };
+
+  // ================= OPTIONS =================
+
+  const userOptions = users.map((u) => ({
+    value: u.id,
+    label: u.fullName
+  }));
+
+  const departmentOptions = departments.map((d) => ({
+    value: d.id,
+    label: d.departmentName
+  }));
 
   return (
     <div className="admin-wrapper">
-      <div className="admin-card">
-        <h2>Admin - Send Notification</h2>
+
+      {/* ===== CENTER TOAST ===== */}
+      {toast.message && (
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
+
+      {/* ===== FORM ===== */}
+      <div className="admin-card" ref={formRef}>
+        <h2>{editId ? "Edit Notification" : "Send Notification"}</h2>
 
         <input
           type="text"
@@ -261,36 +299,71 @@ const AdminNotification = () => {
           onChange={(e) => setRedirectUrl(e.target.value)}
         />
 
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={sendToAll}
+            onChange={(e) => setSendToAll(e.target.checked)}
+          />
+          Send To All Users
+        </label>
+
+        <Select
+          options={userOptions}
+          isMulti
+          isDisabled={sendToAll}
+          placeholder="Select Users..."
+          value={userOptions.filter((u) =>
+            selectedUsers.includes(u.value)
+          )}
+          onChange={(selected) =>
+            setSelectedUsers(selected ? selected.map((s) => s.value) : [])
+          }
+        />
+
+        <Select
+          options={departmentOptions}
+          isMulti
+          isDisabled={sendToAll}
+          placeholder="Select Departments..."
+          value={departmentOptions.filter((d) =>
+            selectedDepartments.includes(d.value)
+          )}
+          onChange={(selected) =>
+            setSelectedDepartments(
+              selected ? selected.map((s) => s.value) : []
+            )
+          }
+        />
+
         <button onClick={handleSubmit}>
           {editId ? "Update Notification" : "Send Notification"}
         </button>
       </div>
 
-      {/* Notification List */}
+      {/* ===== LIST ===== */}
       <div className="admin-list">
         <h3>All Notifications</h3>
 
         {notifications.map((n) => (
           <div key={n.id} className="admin-notification-card">
-            <div>
+            <div className="notification-content">
               <h4>{n.title}</h4>
               <p>{n.message}</p>
-              <small>
-                {new Date(n.createdAt).toLocaleString()}
-              </small>
+            </div>
+
+            <div className="notification-date">
+              {new Date(n.createdAt).toLocaleString()}
             </div>
 
             <div className="action-buttons">
-              <button
-                className="edit-btn"
-                onClick={() => handleEdit(n)}
-              >
+              <button className="edit-btn" onClick={() => handleEdit(n)}>
                 Edit
               </button>
 
               <button
                 className="delete-btn"
-                onClick={() => handleDelete(n.id)}
+                onClick={() => openDeleteModal(n.id)}
               >
                 Delete
               </button>
@@ -298,6 +371,50 @@ const AdminNotification = () => {
           </div>
         ))}
       </div>
+
+      {/* ===== MODERN CONFIRM MODAL ===== */}
+      {showConfirm && (
+        <div
+          className="modal-overlay"
+          onClick={cancelDelete}
+        >
+          <div
+            className="modern-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-icon">⚠️</div>
+
+            <h3>Delete Notification</h3>
+            <p>
+              This action cannot be undone.
+              <br />
+              Are you sure you want to delete?
+            </p>
+
+            <div className="modal-actions">
+              <button
+                className="btn-cancel"
+                onClick={cancelDelete}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="btn-danger"
+                onClick={confirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <span className="spinner"></span>
+                ) : (
+                  "Yes, Delete"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,9 +8,10 @@ function AdminUserList() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 🔥 MODAL STATE
+  // Modal State
   const [showModal, setShowModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const pageSize = 10;
   const navigate = useNavigate();
@@ -33,21 +34,49 @@ function AdminUserList() {
     loadUsers(currentPage);
   }, [currentPage]);
 
-  // 🔥 OPEN CONFIRM MODAL
+  // ESC KEY SUPPORT
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowModal(false);
+        setSelectedUserId(null);
+      }
+    };
+
+    if (showModal) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showModal]);
+
   const handleDeleteClick = (userId) => {
     setSelectedUserId(userId);
     setShowModal(true);
   };
 
-  // 🔥 CONFIRM DELETE
   const confirmDeleteUser = async () => {
+    setIsDeleting(true);
+
     try {
       await axios.delete(`/admin/users/${selectedUserId}`);
+
       setShowModal(false);
       setSelectedUserId(null);
       loadUsers(currentPage);
     } catch {
       alert("Failed to delete user");
+    }
+
+    setIsDeleting(false);
+  };
+
+  const cancelDelete = () => {
+    if (!isDeleting) {
+      setShowModal(false);
+      setSelectedUserId(null);
     }
   };
 
@@ -97,7 +126,7 @@ function AdminUserList() {
         </table>
       </div>
 
-      {/* 🔢 PAGINATION */}
+      {/* PAGINATION */}
       <div className="pagination">
         <button
           disabled={currentPage === 1}
@@ -118,26 +147,44 @@ function AdminUserList() {
         </button>
       </div>
 
-      {/* ✅ CONFIRM DELETE MODAL */}
+      {/* MODERN DELETE MODAL */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h3>Confirm Delete</h3>
-            <p>Are you sure you want to delete this user?</p>
+        <div
+          className="modal-overlay"
+          onClick={cancelDelete}
+        >
+          <div
+            className="modern-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-icon">⚠️</div>
+
+            <h3>Delete User</h3>
+            <p>
+              This action cannot be undone.
+              <br />
+              Are you sure you want to delete this user?
+            </p>
 
             <div className="modal-actions">
               <button
-                className="btn-danger"
-                onClick={confirmDeleteUser}
+                className="btn-cancel"
+                onClick={cancelDelete}
+                disabled={isDeleting}
               >
-                Delete
+                Cancel
               </button>
 
               <button
-                className="btn-secondary"
-                onClick={() => setShowModal(false)}
+                className="btn-danger"
+                onClick={confirmDeleteUser}
+                disabled={isDeleting}
               >
-                Cancel
+                {isDeleting ? (
+                  <span className="spinner"></span>
+                ) : (
+                  "Yes, Delete"
+                )}
               </button>
             </div>
           </div>

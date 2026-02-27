@@ -1,98 +1,84 @@
-// import { useEffect, useState } from "react";
-// import axios from "../api/axiosInstance";
-// import "./UserNotifications.css";
-
-// function UserDashboard() {
-//   const [notifications, setNotifications] = useState([]);
-
-//   useEffect(() => {
-//     axios.get("/user/notifications")
-//       .then(res => setNotifications(res.data));
-//   }, []);
-
-//    return (
-//     <div className="notifications-page">
-//       <h2>Notifications</h2>
-
-//       {notifications.length === 0 ? (
-//         <p>No notifications</p>
-//       ) : (
-//         notifications.map(n => (
-//           <div key={n.id} className="notification-card">
-//             <div className="notification-title">{n.title}</div>
-//             <div className="notification-message">{n.message}</div>
-//             <div className="notification-date">
-//               {new Date(n.createdAt).toLocaleString()}
-//             </div>
-//           </div>
-//         ))
-//       )}
-//     </div>
-//   );
-// }
-
-// export default UserDashboard;
-
-
 import React, { useEffect, useState } from "react";
-import { connection } from "../signalRConnection";
+import * as signalR from "@microsoft/signalr";
 import { useNavigate } from "react-router-dom";
 import "./UserNotifications.css";
 
 const UserDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  // 🔹 1️⃣ Fetch old notifications from DB
+  // 🔹 1️⃣ Fetch existing notifications
   useEffect(() => {
-    fetch("https://localhost:7130/api/user/notifications", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(
+          "https://localhost:7130/api/user/notifications",
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch");
+
+        const data = await res.json();
+        setNotifications(data);
+      } catch (err) {
+        console.error(err);
       }
-    })
-      .then(res => res.json())
-      .then(data => setNotifications(data))
-      .catch(err => console.log(err));
-  }, []);
+    };
 
-  // 🔹 2️⃣ Real-time SignalR listener
+    fetchNotifications();
+  }, [token]);
+
+  // 🔹 2️⃣ SignalR Real-Time Setup (NEW CLEAN CONNECTION)
   useEffect(() => {
-    connection.start()
-      .then(() => console.log("SignalR Connected"))
-      .catch(err => console.log(err));
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("https://localhost:7130/notificationHub", {
+        accessTokenFactory: () => localStorage.getItem("token")
+      })
+      .withAutomaticReconnect()
+      .build();
 
+    const startConnection = async () => {
+      try {
+        await connection.start();
+        console.log("✅ User SignalR Connected");
+      } catch (err) {
+        console.error("SignalR Error:", err);
+      }
+    };
+
+    startConnection();
+
+    // 🔥 RECEIVE CREATE + UPDATE
     connection.on("ReceiveNotification", (notification) => {
-      setNotifications(prev => {
-        const exists = prev.some(n => n.id === notification.id);
+      console.log("🔥 Received:", notification);
+
+      setNotifications((prev) => {
+        const exists = prev.some((n) => n.id === notification.id);
 
         if (exists) {
-          // 🔄 Update existing notification (NO DUPLICATE)
-          return prev.map(n =>
+          return prev.map((n) =>
             n.id === notification.id ? notification : n
           );
         } else {
-          // ➕ Add new notification
           return [notification, ...prev];
         }
       });
-
-      // Optional auto redirect
-      if (notification.redirectUrl) {
-        navigate(notification.redirectUrl);
-      }
     });
 
+    // 🔥 RECEIVE DELETE
     connection.on("DeleteNotification", (id) => {
-      setNotifications(prev =>
-        prev.filter(n => n.id !== id)
+      setNotifications((prev) =>
+        prev.filter((n) => n.id !== id)
       );
     });
 
     return () => {
-      connection.off("ReceiveNotification");
-      connection.off("DeleteNotification");
+      connection.stop();
     };
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="dashboard-container">
@@ -111,7 +97,9 @@ const UserDashboard = () => {
           <div
             key={n.id}
             className="notification-card"
-            onClick={() => n.redirectUrl && navigate(n.redirectUrl)}
+            onClick={() =>
+              n.redirectUrl && navigate(n.redirectUrl)
+            }
           >
             <h3>{n.title}</h3>
             <p>{n.message}</p>

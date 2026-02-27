@@ -1,22 +1,132 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.SignalR;
+//using System.Security.Claims;
+
+//namespace backend.Hubs
+//{
+//    [Authorize]
+//    public class NotificationHub : Hub
+//    {
+//        public override async Task OnConnectedAsync()
+//        {
+//            var role = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
+
+//            if (role == "User")
+//            {
+//                await Groups.AddToGroupAsync(Context.ConnectionId, "User");
+//            }
+
+//            await base.OnConnectedAsync();
+//        }
+//    }
+//}
+
+//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.SignalR;
+//using System.Security.Claims;
+
+//[Authorize]
+//public class NotificationHub : Hub
+//{
+//    public override async Task OnConnectedAsync()
+//    {
+//        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+//        var role = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
+
+//        if (role == "User")
+//        {
+//            await Groups.AddToGroupAsync(Context.ConnectionId, "User");
+//        }
+
+//        if (!string.IsNullOrEmpty(userId))
+//        {
+//            await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
+//        }
+
+//        await base.OnConnectedAsync();
+//    }
+//}
+
+//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.SignalR;
+//using System.Security.Claims;
+
+//namespace backend.Hubs
+//{
+//    [Authorize]
+//    public class NotificationHub : Hub
+//    {
+//        public override async Task OnConnectedAsync()
+//        {
+//            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+//            var role = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
+
+//            if (role == "User")
+//            {
+//                await Groups.AddToGroupAsync(Context.ConnectionId, "User");
+//            }
+
+//            if (!string.IsNullOrEmpty(userId))
+//            {
+//                await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
+//            }
+
+//            await base.OnConnectedAsync();
+//        }
+//    }
+//}
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
-namespace backend.Hubs
+namespace backend.Hubs;
+
+[Authorize]
+public class NotificationHub : Hub
 {
-    [Authorize]
-    public class NotificationHub : Hub
+    public override async Task OnConnectedAsync()
     {
-        public override async Task OnConnectedAsync()
+        var userId = Context.User?
+            .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var role = Context.User?
+            .FindFirst(ClaimTypes.Role)?.Value;
+
+        Console.WriteLine("SignalR Connected UserId: " + userId);
+        Console.WriteLine("SignalR Role: " + role);
+
+        if (!string.IsNullOrEmpty(userId))
         {
-            var role = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
+            // ✅ Individual user group
+            await Groups.AddToGroupAsync(
+                Context.ConnectionId,
+                $"User_{userId}");
 
-            if (role == "User")
-            {
-                await Groups.AddToGroupAsync(Context.ConnectionId, "User");
-            }
-
-            await base.OnConnectedAsync();
+            // ✅ All users group
+            await Groups.AddToGroupAsync(
+                Context.ConnectionId,
+                "User");
         }
+
+        if (!string.IsNullOrEmpty(role))
+        {
+            // ✅ Role group (Admin / User)
+            await Groups.AddToGroupAsync(
+                Context.ConnectionId,
+                role);
+        }
+
+        await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var userId = Context.User?
+            .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        Console.WriteLine("SignalR Disconnected UserId: " + userId);
+
+        await base.OnDisconnectedAsync(exception);
     }
 }

@@ -48,7 +48,7 @@
   },
   {
     "ContainingType": "AdminController",
-    "Method": "DeleteNotification",
+    "Method": "SoftDeleteNotification",
     "RelativePath": "api/admin/notifications/{id}",
     "HttpMethod": "DELETE",
     "IsController": true,
@@ -233,7 +233,7 @@
   },
   {
     "ContainingType": "UserController",
-    "Method": "GetNotifications",
+    "Method": "GetUserNotifications",
     "RelativePath": "api/user/notifications",
     "HttpMethod": "GET",
     "IsController": true,
