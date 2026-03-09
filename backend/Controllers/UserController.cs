@@ -48,49 +48,6 @@ public class UserController : ControllerBase
         return Ok(notifications);
     }
 
-    //[HttpGet("notifications")]
-    //public IActionResult GetNotifications()
-    //{
-    //    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-    //    var departmentId = _context.Users
-    //        .Where(u => u.Id == userId)
-    //        .Select(u => u.DepartmentId)
-    //        .FirstOrDefault();
-
-    //    var notifications = _context.Notifications
-    //        .Where(n => !n.IsDeleted &&
-    //            (
-    //                _context.NotificationUsers.Any(nu => nu.NotificationId == n.Id && nu.UserId == userId)
-    //                ||
-    //                _context.NotificationDepartments.Any(nd => nd.NotificationId == n.Id && nd.DepartmentId == departmentId)
-    //            ))
-    //        .OrderByDescending(n => n.CreatedAt)
-    //        .ToList();
-
-    //    return Ok(notifications);
-    //}
-
-    //// 🔔 GET NOTIFICATIONS (Dashboard Load)
-    //[HttpGet("notifications")]
-    //public IActionResult GetNotifications()
-    //{
-    //    var notifications = _context.Notifications
-    //        .Where(n => !n.IsDeleted)
-    //        .OrderByDescending(n => n.CreatedAt)
-    //        .Select(n => new
-    //        {
-    //            n.Id,
-    //            n.Title,
-    //            n.Message,
-    //            n.RedirectUrl,
-    //            n.CreatedAt
-    //        })
-    //        .ToList();
-
-    //    return Ok(notifications);
-    //}   
-
-
     // 🔹 Get own profile
     [HttpGet("profile")]
     public IActionResult GetProfile()
@@ -162,17 +119,6 @@ public class UserController : ControllerBase
         return Ok(new { message = "Password changed successfully" });
     }
 
-    //// 🔔 GET NOTIFICATIONS (USER)
-    //[HttpGet("notifications")]
-    //public IActionResult GetNotifications()
-    //{
-    //    var notifications = _context.Notifications
-    //        .Where(n => !n.IsDeleted)
-    //        .OrderByDescending(n => n.CreatedAt)
-    //        .ToList();
-
-    //    return Ok(notifications);
-    //}
 
 
    

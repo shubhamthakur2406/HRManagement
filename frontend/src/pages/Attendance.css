@@ -1,0 +1,212 @@
+/* PAGE */
+
+.attendance-page{
+padding:40px;
+background:#eef2ff;
+min-height:100vh;
+font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+/* PAGE TITLE */
+
+.attendance-page h2{
+margin-bottom:20px;
+font-weight:600;
+color:#1e293b;
+}
+
+
+/* CARD WRAPPER */
+
+.attendance-card{
+background:white;
+border-radius:12px;
+padding:25px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+
+/* MARK ATTENDANCE BUTTON */
+
+.btn-mark{
+padding:12px 25px;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:15px;
+font-weight:500;
+transition:all 0.2s ease;
+}
+
+.btn-mark:hover{
+background:#1d4ed8;
+transform:translateY(-1px);
+}
+
+
+/* TABLE */
+
+.attendance-table{
+width:100%;
+border-collapse:collapse;
+background:white;
+border-radius:10px;
+overflow:hidden;
+}
+
+
+/* TABLE HEADER */
+
+.attendance-table th{
+background:#2563eb;
+color:white;
+padding:14px;
+text-align:left;
+font-weight:500;
+}
+
+
+/* TABLE ROW */
+
+.attendance-table td{
+padding:14px;
+border-bottom:1px solid #eee;
+color:#374151;
+}
+
+
+/* ROW HOVER */
+
+.attendance-table tbody tr:hover{
+background:#f8fafc;
+}
+
+
+/* APPROVE BUTTON */
+
+.btn-approve{
+background:#22c55e;
+color:white;
+border:none;
+padding:8px 16px;
+margin-right:8px;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+transition:all 0.2s;
+}
+
+.btn-approve:hover{
+background:#16a34a;
+}
+
+
+/* REJECT BUTTON */
+
+.btn-reject{
+background:#ef4444;
+color:white;
+border:none;
+padding:8px 16px;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+transition:all 0.2s;
+}
+
+.btn-reject:hover{
+background:#dc2626;
+}
+
+
+/* STATUS TEXT */
+
+.status{
+font-weight:600;
+font-size:14px;
+}
+
+.status.pending{
+color:#f59e0b;
+}
+
+.status.approved{
+color:#22c55e;
+}
+
+.status.rejected{
+color:#ef4444;
+}
+
+
+/* STATUS BADGE (FOR ADMIN TABLE) */
+
+.status-badge{
+padding:4px 10px;
+border-radius:10px;
+font-size:12px;
+font-weight:600;
+display:inline-block;
+}
+
+.status-badge.pending{
+background:#fef3c7;
+color:#b45309;
+}
+
+.status-badge.approved{
+background:#dcfce7;
+color:#15803d;
+}
+
+.status-badge.rejected{
+background:#fee2e2;
+color:#b91c1c;
+}
+
+
+/* EMPTY STATE */
+
+.no-data{
+text-align:center;
+padding:20px;
+color:#6b7280;
+font-size:14px;
+}
+
+
+.attendance-info{
+margin-top:20px;
+background:white;
+padding:15px;
+border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+.attendance-info h4{
+margin-bottom:10px;
+}
+
+.status{
+font-weight:600;
+font-size:16px;
+}
+
+.status.approved{
+color:#22c55e;
+}
+
+.status.rejected{
+color:#ef4444;
+}
+
+.status.pending{
+color:#f59e0b;
+}
+
+.status.not-marked{
+color:#64748b;
+}

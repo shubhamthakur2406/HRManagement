@@ -47,3 +47,14 @@ CREATE TABLE NotificationDepartments (
 );
 ALTER TABLE Notifications
 ADD SendToAll BIT NOT NULL DEFAULT 0;
+
+CREATE TABLE AttendanceRequests (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL,
+    RequestDate DATETIME2 NOT NULL DEFAULT GETDATE(),
+    RequestDay AS CAST(RequestDate AS DATE) PERSISTED,
+    Status NVARCHAR(20) NOT NULL DEFAULT 'Pending'
+);
+
+CREATE UNIQUE INDEX UX_User_RequestDay
+ON AttendanceRequests(UserId, RequestDay);

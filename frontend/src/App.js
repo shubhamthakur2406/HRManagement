@@ -10,6 +10,8 @@ import UserProfile from "./pages/UserProfile";
 import AdminUserList from "./pages/AdminUserList";
 import AdminEditUserPage from "./pages/AdminEditUserPage";
 import AdminNotifications from "./pages/AdminNotifications";
+import AdminAttendanceRequests from "./pages/AdminAttendanceRequests";
+import UserAttendance from "./pages/UserAttendance";
 
 
 /* 👇 Separate component because useLocation must be inside Router */
@@ -71,6 +73,15 @@ function AppContent() {
           />
 
           <Route
+            path="/admin/attendance-requests"
+            element={
+              <ProtectedRoute role="Admin">
+                <AdminAttendanceRequests />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/admin/users"
             element={
               <ProtectedRoute role="Admin">
@@ -84,6 +95,15 @@ function AppContent() {
             element={
               <ProtectedRoute role="User">
                 <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/user/attendance"
+            element={
+              <ProtectedRoute role="User">
+                <UserAttendance/>
               </ProtectedRoute>
             }
           />
