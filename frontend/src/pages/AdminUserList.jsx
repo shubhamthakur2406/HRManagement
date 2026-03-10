@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axiosInstance";
+import toast, { Toaster } from "react-hot-toast";
 import "./AdminUserList.css";
 
 function AdminUserList() {
@@ -8,7 +9,6 @@ function AdminUserList() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Modal State
   const [showModal, setShowModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -26,7 +26,7 @@ function AdminUserList() {
       setUsers(res.data.users);
       setTotalUsers(res.data.totalUsers);
     } catch {
-      alert("Failed to load users");
+      toast.error("Failed to load users");
     }
   };
 
@@ -34,7 +34,8 @@ function AdminUserList() {
     loadUsers(currentPage);
   }, [currentPage]);
 
-  // ESC KEY SUPPORT
+  /* ESC KEY SUPPORT */
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -63,11 +64,14 @@ function AdminUserList() {
     try {
       await axios.delete(`/admin/users/${selectedUserId}`);
 
+      toast.success("User deleted successfully");
+
       setShowModal(false);
       setSelectedUserId(null);
+
       loadUsers(currentPage);
     } catch {
-      alert("Failed to delete user");
+      toast.error("Failed to delete user");
     }
 
     setIsDeleting(false);
@@ -82,6 +86,9 @@ function AdminUserList() {
 
   return (
     <div className="users-page">
+
+      <Toaster position="top-right" />
+
       <h2>All Users</h2>
 
       <div className="users-table-wrapper">
@@ -127,6 +134,7 @@ function AdminUserList() {
       </div>
 
       {/* PAGINATION */}
+
       <div className="pagination">
         <button
           disabled={currentPage === 1}
@@ -147,19 +155,19 @@ function AdminUserList() {
         </button>
       </div>
 
-      {/* MODERN DELETE MODAL */}
+      {/* DELETE MODAL */}
+
       {showModal && (
-        <div
-          className="modal-overlay"
-          onClick={cancelDelete}
-        >
+        <div className="modal-overlay" onClick={cancelDelete}>
           <div
             className="modern-modal"
             onClick={(e) => e.stopPropagation()}
           >
+
             <div className="modal-icon">⚠️</div>
 
             <h3>Delete User</h3>
+
             <p>
               This action cannot be undone.
               <br />
@@ -167,6 +175,7 @@ function AdminUserList() {
             </p>
 
             <div className="modal-actions">
+
               <button
                 className="btn-cancel"
                 onClick={cancelDelete}
@@ -186,10 +195,13 @@ function AdminUserList() {
                   "Yes, Delete"
                 )}
               </button>
+
             </div>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }

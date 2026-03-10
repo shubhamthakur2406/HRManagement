@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import "./App.css";
 import Login from "./pages/Login";
@@ -14,20 +15,27 @@ import AdminAttendanceRequests from "./pages/AdminAttendanceRequests";
 import UserAttendance from "./pages/UserAttendance";
 
 
-/* 👇 Separate component because useLocation must be inside Router */
 function AppContent() {
   const location = useLocation();
   const isLoginPage = location.pathname === "/";
 
+  // Remove token whenever app starts
+  // useEffect(() => {
+  //   localStorage.removeItem("token");
+  // }, []);
+
   return (
     <>
-      <Navbar />
+      {/* Hide Navbar on Login page */}
+      {!isLoginPage && <Navbar />}
 
-      {/* Remove margin on login page */}
       <div className={isLoginPage ? "" : "main-content"}>
         <Routes>
+
+          {/* Login Page */}
           <Route path="/" element={<Login />} />
 
+          {/* Admin Routes */}
           <Route
             path="/register"
             element={
@@ -36,20 +44,12 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/notifications"
             element={
               <ProtectedRoute role="Admin">
                 <AdminNotifications />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/user"
-            element={
-              <ProtectedRoute role="User">
-                <UserDashboard />
               </ProtectedRoute>
             }
           />
@@ -90,6 +90,16 @@ function AppContent() {
             }
           />
 
+          {/* User Routes */}
+          <Route
+            path="/user"
+            element={
+              <ProtectedRoute role="User">
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/profile"
             element={
@@ -103,19 +113,11 @@ function AppContent() {
             path="/user/attendance"
             element={
               <ProtectedRoute role="User">
-                <UserAttendance/>
+                <UserAttendance />
               </ProtectedRoute>
             }
           />
 
-          <Route
-            path="/user"
-            element={
-              <ProtectedRoute role="User">
-                <UserDashboard />
-              </ProtectedRoute>
-            }
-          />
         </Routes>
       </div>
     </>

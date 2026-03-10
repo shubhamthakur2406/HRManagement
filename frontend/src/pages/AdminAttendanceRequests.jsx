@@ -10,36 +10,7 @@ const [loadingId,setLoadingId] = useState(null);
 
 const token = localStorage.getItem("token");
 
-useEffect(()=>{
-
-loadRequests();
-
-/* SIGNALR CONNECTION */
-
-const connection = new signalR.HubConnectionBuilder()
-.withUrl("https://localhost:7130/attendanceHub",{
-accessTokenFactory:()=>token
-})
-.withAutomaticReconnect()
-.build();
-
-connection.start()
-.then(()=>console.log("Admin SignalR Connected"))
-.catch(err=>console.log(err));
-
-/* REALTIME NEW REQUEST */
-
-connection.on("NewAttendanceRequest",(req)=>{
-setRequests(prev=>[req,...prev]);
-toast("New Attendance Request");
-});
-
-return ()=>connection.stop();
-
-},[]);
-
-
-/* LOAD REQUESTS */
+/* ================= LOAD REQUESTS ================= */
 
 const loadRequests = async ()=>{
 
@@ -53,20 +24,87 @@ Authorization:`Bearer ${token}`
 }
 });
 
+if(!res.ok){
+toast.error("Failed to fetch attendance requests");
+return;
+}
+
 const data = await res.json();
 
 setRequests(data);
 
 }catch{
 
-toast.error("Failed to load attendance requests");
+toast.error("Server error while loading requests");
 
 }
 
 };
 
 
-/* APPROVE */
+/* ================= SIGNALR ================= */
+
+useEffect(()=>{
+
+loadRequests();
+
+const connection = new signalR.HubConnectionBuilder()
+.withUrl("https://localhost:7130/attendanceHub",{
+accessTokenFactory:()=>token
+})
+.withAutomaticReconnect()
+.build();
+
+/* START CONNECTION */
+
+connection.start()
+.then(()=>{
+
+console.log("Admin SignalR Connected");
+
+})
+.catch(err=>console.error("SignalR Connection Error:",err));
+
+/* ===== NEW ATTENDANCE REQUEST ===== */
+
+connection.on("NewAttendanceRequest",(req)=>{
+
+setRequests(prev=>{
+
+const exists = prev.find(x=>x.id===req.id);
+
+if(exists) return prev;
+
+return [req,...prev];
+
+});
+
+toast.success("New Attendance Request");
+
+});
+
+/* ===== STATUS UPDATE ===== */
+
+connection.on("AttendanceStatusUpdated",(data)=>{
+
+setRequests(prev=>prev.map(x=>
+x.id===data.id ? {...x,status:data.status} : x
+));
+
+});
+
+/* CLEANUP */
+
+return ()=>{
+
+connection.stop();
+
+};
+
+},[]);
+
+
+/* ================= APPROVE ================= */
 
 const approve = async(id)=>{
 
@@ -83,8 +121,7 @@ Authorization:`Bearer ${token}`
 }
 });
 
-if(!res.ok)
-{
+if(!res.ok){
 toast.error("Approval failed");
 return;
 }
@@ -106,7 +143,7 @@ setLoadingId(null);
 };
 
 
-/* REJECT */
+/* ================= REJECT ================= */
 
 const reject = async(id)=>{
 
@@ -123,8 +160,7 @@ Authorization:`Bearer ${token}`
 }
 });
 
-if(!res.ok)
-{
+if(!res.ok){
 toast.error("Reject failed");
 return;
 }
@@ -180,8 +216,6 @@ No attendance requests
 {requests.map(r=>(
 
 <tr key={r.id}>
-
-{/* USER NAME INSTEAD OF USER ID */}
 
 <td>{r.userName}</td>
 

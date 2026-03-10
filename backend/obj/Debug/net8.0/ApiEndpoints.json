@@ -175,7 +175,7 @@
   },
   {
     "ContainingType": "AttendanceController",
-    "Method": "Approve",
+    "Method": "ApproveAttendance",
     "RelativePath": "api/Attendance/approve/{id}",
     "HttpMethod": "POST",
     "IsController": true,
@@ -201,7 +201,7 @@
   },
   {
     "ContainingType": "AttendanceController",
-    "Method": "MyAttendance",
+    "Method": "GetMyAttendance",
     "RelativePath": "api/Attendance/my-attendance",
     "HttpMethod": "GET",
     "IsController": true,
@@ -211,7 +211,7 @@
   },
   {
     "ContainingType": "AttendanceController",
-    "Method": "Reject",
+    "Method": "RejectAttendance",
     "RelativePath": "api/Attendance/reject/{id}",
     "HttpMethod": "POST",
     "IsController": true,
@@ -227,7 +227,7 @@
   },
   {
     "ContainingType": "AttendanceController",
-    "Method": "GetRequests",
+    "Method": "GetAttendanceRequests",
     "RelativePath": "api/Attendance/requests",
     "HttpMethod": "GET",
     "IsController": true,

@@ -7,11 +7,11 @@ import "./Attendance.css";
 
 const UserAttendance = () => {
 
-const [status,setStatus] = useState("");
 const [attendanceRecords,setAttendanceRecords] = useState({});
-
-const [selectedDate,setSelectedDate] = useState(null);
-const [selectedStatus,setSelectedStatus] = useState("");
+const [selectedDate,setSelectedDate] = useState(
+new Date().toLocaleDateString("en-CA")
+);
+const [selectedStatus,setSelectedStatus] = useState("Not Marked");
 
 const token = localStorage.getItem("token");
 
@@ -41,9 +41,8 @@ map[date] = r.status;
 
 setAttendanceRecords(map);
 
-if(data.todayStatus)
-{
-setStatus(data.todayStatus.toLowerCase());
+if(map[selectedDate]){
+setSelectedStatus(map[selectedDate]);
 }
 
 }catch{
@@ -71,53 +70,56 @@ connection.start()
 .catch(err=>console.log(err));
 
 
-/* ===== APPROVED ===== */
+/* ===== APPROVED EVENT ===== */
 
 connection.on("AttendanceApproved",(data)=>{
 
 toast.success("Attendance Approved ✅");
 
-setStatus("approved");
-
-/* update calendar instantly */
-
 const date = new Date(data.date).toLocaleDateString("en-CA");
 
-setAttendanceRecords(prev=>({
+setAttendanceRecords(prev=>{
+
+const updated = {
 ...prev,
 [date]:"Approved"
-}));
+};
 
-if(selectedDate === date)
-{
+if(date === selectedDate){
 setSelectedStatus("Approved");
 }
+
+return updated;
+
+});
 
 });
 
 
-/* ===== REJECTED ===== */
+/* ===== REJECTED EVENT ===== */
 
 connection.on("AttendanceRejected",(data)=>{
 
 toast.error("Attendance Rejected ❌");
 
-setStatus("rejected");
-
 const date = new Date(data.date).toLocaleDateString("en-CA");
 
-setAttendanceRecords(prev=>({
+setAttendanceRecords(prev=>{
+
+const updated = {
 ...prev,
 [date]:"Rejected"
-}));
+};
 
-if(selectedDate === date)
-{
+if(date === selectedDate){
 setSelectedStatus("Rejected");
 }
 
+return updated;
+
 });
 
+});
 
 return ()=>connection.stop();
 
@@ -135,25 +137,31 @@ const res = await fetch(
 {
 method:"POST",
 headers:{
-Authorization:`Bearer ${token}`
-}
+Authorization:`Bearer ${token}`,
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+date:selectedDate
+})
 }
 );
 
-if(!res.ok)
-{
-toast.error("Attendance already requested today");
+if(!res.ok){
+toast.error("Attendance already requested");
 return;
 }
 
 toast.success("Attendance request sent");
 
-setStatus("pending");
+setAttendanceRecords(prev=>({
+...prev,
+[selectedDate]:"Pending"
+}));
+
+setSelectedStatus("Pending");
 
 }catch{
-
 toast.error("Server error");
-
 }
 
 };
@@ -166,12 +174,11 @@ return date.toLocaleDateString("en-CA");
 };
 
 
-/* ================= CALENDAR COLOR ================= */
+/* ================= CALENDAR COLORS ================= */
 
 const highlightAttendance = ({date})=>{
 
 const formatted = formatDate(date);
-
 const status = attendanceRecords[formatted];
 
 if(status === "Approved") return "present-day";
@@ -189,18 +196,18 @@ const formatted = formatDate(date);
 
 setSelectedDate(formatted);
 
-const status = attendanceRecords[formatted];
-
-if(status)
-{
-setSelectedStatus(status);
-}
-else
-{
+if(attendanceRecords[formatted]){
+setSelectedStatus(attendanceRecords[formatted]);
+}else{
 setSelectedStatus("Not Marked");
 }
 
 };
+
+
+/* ================= CURRENT STATUS ================= */
+
+const currentStatus = attendanceRecords[selectedDate];
 
 
 /* ================= UI ================= */
@@ -218,26 +225,32 @@ return(
 <button
 className="btn-mark"
 onClick={markAttendance}
-disabled={status==="pending"}
+disabled={currentStatus==="Pending"}
 >
 Mark Attendance
 </button>
 
-{status==="pending" &&
+{currentStatus==="Pending" &&
 <p className="status pending">
 Waiting for admin approval
 </p>
 }
 
-{status==="approved" &&
+{currentStatus==="Approved" &&
 <p className="status approved">
 Attendance Approved
 </p>
 }
 
-{status==="rejected" &&
+{currentStatus==="Rejected" &&
 <p className="status rejected">
 Attendance Rejected
+</p>
+}
+
+{!currentStatus &&
+<p className="status">
+Not Marked
 </p>
 }
 

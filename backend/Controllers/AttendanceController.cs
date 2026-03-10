@@ -1,10 +1,166 @@
-﻿using backend.Data;
+﻿//using backend.Data;
+//using backend.Models;
+//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.Mvc;
+//using Microsoft.AspNetCore.SignalR;
+//using Microsoft.EntityFrameworkCore;
+
+//[Route("api/[controller]")]
+//[ApiController]
+//public class AttendanceController : ControllerBase
+//{
+//    private readonly AuthDbContext _context;
+//    private readonly IHubContext<AttendanceHub> _hub;
+
+//    public AttendanceController(AuthDbContext context, IHubContext<AttendanceHub> hub)
+//    {
+//        _context = context;
+//        _hub = hub;
+//    }
+
+//    /* ================= USER MARK ATTENDANCE ================= */
+
+//    [Authorize]
+//    [HttpPost("mark")]
+//    public async Task<IActionResult> MarkAttendance()
+//    {
+//        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+//        if (userId == null)
+//            return Unauthorized();
+
+//        var today = DateTime.UtcNow.Date;
+
+//        var exists = await _context.AttendanceRequests
+//            .FirstOrDefaultAsync(a => a.UserId == int.Parse(userId) && a.RequestDate == today);
+
+//        if (exists != null)
+//            return BadRequest("Attendance already requested");
+
+//        var attendance = new AttendanceRequest
+//        {
+//            UserId = int.Parse(userId),
+//            RequestDate = today,
+//            Status = "Pending"
+//        };
+
+//        _context.AttendanceRequests.Add(attendance);
+//        await _context.SaveChangesAsync();
+
+//        /* 🔥 SEND REALTIME UPDATE TO ADMIN */
+
+//        await _hub.Clients.Group("Admins")
+//            .SendAsync("NewAttendanceRequest");
+
+//        return Ok(new { message = "Attendance request sent" });
+//    }
+
+//    /* ================= ADMIN GET REQUESTS ================= */
+
+//    [Authorize(Roles = "Admin")]
+//    [HttpGet("requests")]
+//    public async Task<IActionResult> GetAttendanceRequests()
+//    {
+//        var data = await _context.AttendanceRequests
+//            .Include(a => a.User)
+//            .OrderByDescending(a => a.RequestDate)
+//            .Select(a => new
+//            {
+//                a.Id,
+//                a.UserId,
+//                UserName = a.User.FullName,
+//                a.RequestDate,
+//                a.Status
+//            })
+//            .ToListAsync();
+
+//        return Ok(data);
+//    }
+
+//    /* ================= ADMIN APPROVE ================= */
+
+//    [Authorize(Roles = "Admin")]
+//    [HttpPost("approve/{id}")]
+//    public async Task<IActionResult> ApproveAttendance(int id)
+//    {
+//        var attendance = await _context.AttendanceRequests.FindAsync(id);
+
+//        if (attendance == null)
+//            return NotFound();
+
+//        attendance.Status = "Approved";
+
+//        await _context.SaveChangesAsync();
+
+//        /* ===== SIGNALR REALTIME UPDATE ===== */
+
+//        await _hub.Clients.Group($"User_{attendance.UserId}")
+//        .SendAsync("AttendanceApproved", new
+//        {
+//            date = attendance.RequestDate
+//        });
+
+//        return Ok(new { message = "Attendance approved" });
+//    }
+
+//    /* ================= ADMIN REJECT ================= */
+
+//    [Authorize(Roles = "Admin")]
+//    [HttpPost("reject/{id}")]
+//    public async Task<IActionResult> RejectAttendance(int id)
+//    {
+//        var attendance = await _context.AttendanceRequests.FindAsync(id);
+
+//        if (attendance == null)
+//            return NotFound();
+
+//        attendance.Status = "Rejected";
+
+//        await _context.SaveChangesAsync();
+
+//        /* ===== SIGNALR REALTIME UPDATE ===== */
+
+//        await _hub.Clients.Group($"User_{attendance.UserId}")
+//        .SendAsync("AttendanceRejected", new
+//        {
+//            date = attendance.RequestDate
+//        });
+
+//        return Ok(new { message = "Attendance rejected" });
+//    }
+
+
+//    /* ================= USER GET MY ATTENDANCE ================= */
+
+//    [Authorize]
+//    [HttpGet("my-attendance")]
+//    public async Task<IActionResult> GetMyAttendance()
+//    {
+//        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+//        if (userId == null)
+//            return Unauthorized();
+
+//        var records = await _context.AttendanceRequests
+//            .Where(a => a.UserId == int.Parse(userId))
+//            .Select(a => new
+//            {
+//                date = a.RequestDate.Date,
+//                status = a.Status
+//            })
+//            .ToListAsync();
+
+//        return Ok(new { records });
+//    }
+//}
+
+
+using backend.Data;
 using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -19,159 +175,169 @@ public class AttendanceController : ControllerBase
         _hub = hub;
     }
 
-    // ================= USER MARK ATTENDANCE =================
+    /* ================= USER MARK ATTENDANCE ================= */
 
     [Authorize]
     [HttpPost("mark")]
     public async Task<IActionResult> MarkAttendance()
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-        var today = DateTime.Today;
+        if (userId == null)
+            return Unauthorized();
 
-        var existingRequest = await _context.AttendanceRequests
-            .FirstOrDefaultAsync(x => x.UserId == userId && x.RequestDate.Date == today);
+        var today = DateTime.UtcNow.Date;
 
-        // CASE 1 : Already approved
-        if (existingRequest != null && existingRequest.Status == "Approved")
+        var exists = await _context.AttendanceRequests
+            .FirstOrDefaultAsync(a => a.UserId == int.Parse(userId) && a.RequestDate == today);
+
+        if (exists != null)
+            return BadRequest("Attendance already requested");
+
+        var attendance = new AttendanceRequest
         {
-            return BadRequest("Attendance already approved today.");
-        }
-
-        // CASE 2 : Request already pending
-        if (existingRequest != null && existingRequest.Status == "Pending")
-        {
-            return BadRequest("Attendance request already pending.");
-        }
-
-        // CASE 3 : Reapply after rejection
-        if (existingRequest != null && existingRequest.Status == "Rejected")
-        {
-            existingRequest.Status = "Pending";
-            existingRequest.RequestDate = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-
-            await _hub.Clients.Group("Admins")
-                .SendAsync("NewAttendanceRequest", existingRequest);
-
-            return Ok(existingRequest);
-        }
-
-        // CASE 4 : First request
-        var request = new AttendanceRequest
-        {
-            UserId = userId,
-            RequestDate = DateTime.Now,
+            UserId = int.Parse(userId),
+            RequestDate = today,
             Status = "Pending"
         };
 
-        _context.AttendanceRequests.Add(request);
-
+        _context.AttendanceRequests.Add(attendance);
         await _context.SaveChangesAsync();
 
-        await _hub.Clients.Group("Admins")
-            .SendAsync("NewAttendanceRequest", request);
+        /* ===== GET USER NAME ===== */
 
-        return Ok(request);
+        var user = await _context.Users.FindAsync(attendance.UserId);
+
+        var requestData = new
+        {
+            id = attendance.Id,
+            userId = attendance.UserId,
+            userName = user?.FullName,
+            requestDate = attendance.RequestDate,
+            status = attendance.Status
+        };
+
+        /* ===== REALTIME EVENT FOR ADMIN ===== */
+
+        await _hub.Clients.All.SendAsync("NewAttendanceRequest", requestData);
+
+        return Ok(new { message = "Attendance request sent" });
     }
 
-
-    // ================= ADMIN GET ALL REQUESTS =================
+    /* ================= ADMIN GET REQUESTS ================= */
 
     [Authorize(Roles = "Admin")]
     [HttpGet("requests")]
-    public async Task<IActionResult> GetRequests()
+    public async Task<IActionResult> GetAttendanceRequests()
     {
-        var requests = await _context.AttendanceRequests
-            .Include(x => x.User)
-            .OrderByDescending(x => x.RequestDate)
-            .Select(x => new
+        var data = await _context.AttendanceRequests
+            .Include(a => a.User)
+            .OrderByDescending(a => a.RequestDate)
+            .Select(a => new
             {
-                x.Id,
-                UserName = x.User.FullName,
-                x.RequestDate,
-                x.Status
+                a.Id,
+                a.UserId,
+                userName = a.User.FullName,
+                requestDate = a.RequestDate,
+                status = a.Status
             })
             .ToListAsync();
 
-        return Ok(requests);
+        return Ok(data);
     }
 
-
-    // ================= ADMIN APPROVE =================
+    /* ================= ADMIN APPROVE ================= */
 
     [Authorize(Roles = "Admin")]
     [HttpPost("approve/{id}")]
-    public async Task<IActionResult> Approve(int id)
+    public async Task<IActionResult> ApproveAttendance(int id)
     {
-        var request = await _context.AttendanceRequests
-            .FirstOrDefaultAsync(x => x.Id == id);
+        var attendance = await _context.AttendanceRequests
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(a => a.Id == id);
 
-        if (request == null)
-            return NotFound("Request not found");
+        if (attendance == null)
+            return NotFound();
 
-        request.Status = "Approved";
+        attendance.Status = "Approved";
 
         await _context.SaveChangesAsync();
 
-        // REALTIME UPDATE TO USER
-        await _hub.Clients.Group($"User_{request.UserId}")
-            .SendAsync("AttendanceApproved");
+        /* ===== UPDATE ADMIN TABLE REALTIME ===== */
+
+        await _hub.Clients.All.SendAsync("AttendanceStatusUpdated", new
+        {
+            id = attendance.Id,
+            status = "Approved"
+        });
+
+        /* ===== NOTIFY USER ===== */
+
+        await _hub.Clients.Group($"User_{attendance.UserId}")
+        .SendAsync("AttendanceApproved", new
+        {
+            date = attendance.RequestDate
+        });
 
         return Ok(new { message = "Attendance approved" });
     }
 
-
-    // ================= ADMIN REJECT =================
+    /* ================= ADMIN REJECT ================= */
 
     [Authorize(Roles = "Admin")]
     [HttpPost("reject/{id}")]
-    public async Task<IActionResult> Reject(int id)
+    public async Task<IActionResult> RejectAttendance(int id)
     {
-        var request = await _context.AttendanceRequests
-            .FirstOrDefaultAsync(x => x.Id == id);
+        var attendance = await _context.AttendanceRequests
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(a => a.Id == id);
 
-        if (request == null)
-            return NotFound("Request not found");
+        if (attendance == null)
+            return NotFound();
 
-        request.Status = "Rejected";
+        attendance.Status = "Rejected";
 
         await _context.SaveChangesAsync();
 
-        // REALTIME UPDATE TO USER
-        await _hub.Clients.Group($"User_{request.UserId}")
-            .SendAsync("AttendanceRejected");
+        /* ===== UPDATE ADMIN TABLE REALTIME ===== */
+
+        await _hub.Clients.All.SendAsync("AttendanceStatusUpdated", new
+        {
+            id = attendance.Id,
+            status = "Rejected"
+        });
+
+        /* ===== NOTIFY USER ===== */
+
+        await _hub.Clients.Group($"User_{attendance.UserId}")
+        .SendAsync("AttendanceRejected", new
+        {
+            date = attendance.RequestDate
+        });
 
         return Ok(new { message = "Attendance rejected" });
     }
 
+    /* ================= USER GET MY ATTENDANCE ================= */
 
-    // ================= USER ATTENDANCE HISTORY =================
     [Authorize]
     [HttpGet("my-attendance")]
-    public IActionResult MyAttendance()
+    public async Task<IActionResult> GetMyAttendance()
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-        var records = _context.AttendanceRequests
-            .Where(x => x.UserId == userId)
-            .Select(x => new
+        if (userId == null)
+            return Unauthorized();
+
+        var records = await _context.AttendanceRequests
+            .Where(a => a.UserId == int.Parse(userId))
+            .Select(a => new
             {
-                date = x.RequestDate.Date,
-                status = x.Status
+                date = a.RequestDate.Date,
+                status = a.Status
             })
-            .ToList();
+            .ToListAsync();
 
-        var todayStatus = _context.AttendanceRequests
-            .Where(x => x.UserId == userId && x.RequestDate.Date == DateTime.Today)
-            .Select(x => x.Status)
-            .FirstOrDefault();
-
-        return Ok(new
-        {
-            records,
-            todayStatus
-        });
+        return Ok(new { records });
     }
 }
