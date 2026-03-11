@@ -1,4 +1,5 @@
 ﻿//using backend.Data;
+//using backend.DTOs;
 //using backend.Models;
 //using Microsoft.AspNetCore.Authorization;
 //using Microsoft.AspNetCore.Mvc;
@@ -20,9 +21,56 @@
 
 //    /* ================= USER MARK ATTENDANCE ================= */
 
+//    //[Authorize]
+//    //[HttpPost("mark")]
+//    //public async Task<IActionResult> MarkAttendance()
+//    //{
+//    //    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+//    //    if (userId == null)
+//    //        return Unauthorized();
+
+//    //    var today = DateTime.UtcNow.Date;
+
+//    //    var exists = await _context.AttendanceRequests
+//    //        .FirstOrDefaultAsync(a => a.UserId == int.Parse(userId) && a.RequestDate == today);
+
+//    //    if (exists != null)
+//    //        return BadRequest("Attendance already requested");
+
+//    //    var attendance = new AttendanceRequest
+//    //    {
+//    //        UserId = int.Parse(userId),
+//    //        RequestDate = today,
+//    //        Status = "Pending"
+//    //    };
+
+//    //    _context.AttendanceRequests.Add(attendance);
+//    //    await _context.SaveChangesAsync();
+
+//    //    /* ===== GET USER NAME ===== */
+
+//    //    var user = await _context.Users.FindAsync(attendance.UserId);
+
+//    //    var requestData = new
+//    //    {
+//    //        id = attendance.Id,
+//    //        userId = attendance.UserId,
+//    //        userName = user?.FullName,
+//    //        requestDate = attendance.RequestDate,
+//    //        status = attendance.Status
+//    //    };
+
+//    //    /* ===== REALTIME EVENT FOR ADMIN ===== */
+
+//    //    await _hub.Clients.All.SendAsync("NewAttendanceRequest", requestData);
+
+//    //    return Ok(new { message = "Attendance request sent" });
+//    //}
+
 //    [Authorize]
 //    [HttpPost("mark")]
-//    public async Task<IActionResult> MarkAttendance()
+//    public async Task<IActionResult> MarkAttendance([FromBody] AttendanceRequestDto dto)
 //    {
 //        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -31,8 +79,22 @@
 
 //        var today = DateTime.UtcNow.Date;
 
+//        /* BLOCK FUTURE */
+
+//        if (dto.RequestDate.Date > today)
+//            return BadRequest("Future attendance not allowed");
+
+//        /* 7 DAY RULE */
+
+//        if ((today - dto.RequestDate.Date).TotalDays > 7)
+//            return BadRequest("You can regularize only last 7 days");
+
+//        /* DUPLICATE CHECK */
+
 //        var exists = await _context.AttendanceRequests
-//            .FirstOrDefaultAsync(a => a.UserId == int.Parse(userId) && a.RequestDate == today);
+//            .FirstOrDefaultAsync(a =>
+//                a.UserId == int.Parse(userId) &&
+//                a.RequestDate == dto.RequestDate.Date);
 
 //        if (exists != null)
 //            return BadRequest("Attendance already requested");
@@ -40,19 +102,33 @@
 //        var attendance = new AttendanceRequest
 //        {
 //            UserId = int.Parse(userId),
-//            RequestDate = today,
+//            RequestDate = dto.RequestDate.Date,
+//            Reason = dto.Reason,
 //            Status = "Pending"
 //        };
 
 //        _context.AttendanceRequests.Add(attendance);
 //        await _context.SaveChangesAsync();
 
-//        /* 🔥 SEND REALTIME UPDATE TO ADMIN */
+//        /* GET USER NAME */
 
-//        await _hub.Clients.Group("Admins")
-//            .SendAsync("NewAttendanceRequest");
+//        var user = await _context.Users.FindAsync(attendance.UserId);
 
-//        return Ok(new { message = "Attendance request sent" });
+//        var requestData = new
+//        {
+//            id = attendance.Id,
+//            userId = attendance.UserId,
+//            userName = user?.FullName,
+//            requestDate = attendance.RequestDate,
+//            reason = attendance.Reason,
+//            status = attendance.Status
+//        };
+
+//        /* SIGNALR ADMIN UPDATE */
+
+//        await _hub.Clients.All.SendAsync("NewAttendanceRequest", requestData);
+
+//        return Ok(new { message = "Attendance request submitted" });
 //    }
 
 //    /* ================= ADMIN GET REQUESTS ================= */
@@ -68,9 +144,9 @@
 //            {
 //                a.Id,
 //                a.UserId,
-//                UserName = a.User.FullName,
-//                a.RequestDate,
-//                a.Status
+//                userName = a.User.FullName,
+//                requestDate = a.RequestDate,
+//                status = a.Status
 //            })
 //            .ToListAsync();
 
@@ -83,7 +159,9 @@
 //    [HttpPost("approve/{id}")]
 //    public async Task<IActionResult> ApproveAttendance(int id)
 //    {
-//        var attendance = await _context.AttendanceRequests.FindAsync(id);
+//        var attendance = await _context.AttendanceRequests
+//            .Include(a => a.User)
+//            .FirstOrDefaultAsync(a => a.Id == id);
 
 //        if (attendance == null)
 //            return NotFound();
@@ -92,7 +170,15 @@
 
 //        await _context.SaveChangesAsync();
 
-//        /* ===== SIGNALR REALTIME UPDATE ===== */
+//        /* ===== UPDATE ADMIN TABLE REALTIME ===== */
+
+//        await _hub.Clients.All.SendAsync("AttendanceStatusUpdated", new
+//        {
+//            id = attendance.Id,
+//            status = "Approved"
+//        });
+
+//        /* ===== NOTIFY USER ===== */
 
 //        await _hub.Clients.Group($"User_{attendance.UserId}")
 //        .SendAsync("AttendanceApproved", new
@@ -109,7 +195,9 @@
 //    [HttpPost("reject/{id}")]
 //    public async Task<IActionResult> RejectAttendance(int id)
 //    {
-//        var attendance = await _context.AttendanceRequests.FindAsync(id);
+//        var attendance = await _context.AttendanceRequests
+//            .Include(a => a.User)
+//            .FirstOrDefaultAsync(a => a.Id == id);
 
 //        if (attendance == null)
 //            return NotFound();
@@ -118,7 +206,15 @@
 
 //        await _context.SaveChangesAsync();
 
-//        /* ===== SIGNALR REALTIME UPDATE ===== */
+//        /* ===== UPDATE ADMIN TABLE REALTIME ===== */
+
+//        await _hub.Clients.All.SendAsync("AttendanceStatusUpdated", new
+//        {
+//            id = attendance.Id,
+//            status = "Rejected"
+//        });
+
+//        /* ===== NOTIFY USER ===== */
 
 //        await _hub.Clients.Group($"User_{attendance.UserId}")
 //        .SendAsync("AttendanceRejected", new
@@ -128,7 +224,6 @@
 
 //        return Ok(new { message = "Attendance rejected" });
 //    }
-
 
 //    /* ================= USER GET MY ATTENDANCE ================= */
 
@@ -156,6 +251,7 @@
 
 
 using backend.Data;
+using backend.DTOs;
 using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -175,11 +271,11 @@ public class AttendanceController : ControllerBase
         _hub = hub;
     }
 
-    /* ================= USER MARK ATTENDANCE ================= */
+    /* ================= USER MARK / REGULARIZE ATTENDANCE ================= */
 
     [Authorize]
     [HttpPost("mark")]
-    public async Task<IActionResult> MarkAttendance()
+    public async Task<IActionResult> MarkAttendance([FromBody] AttendanceRequestDto dto)
     {
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -188,8 +284,22 @@ public class AttendanceController : ControllerBase
 
         var today = DateTime.UtcNow.Date;
 
+        /* BLOCK FUTURE */
+
+        if (dto.RequestDate.Date > today)
+            return BadRequest("Future attendance not allowed");
+
+        /* 7 DAY RULE */
+
+        if ((today - dto.RequestDate.Date).TotalDays > 7)
+            return BadRequest("You can regularize only last 7 days");
+
+        /* DUPLICATE CHECK */
+
         var exists = await _context.AttendanceRequests
-            .FirstOrDefaultAsync(a => a.UserId == int.Parse(userId) && a.RequestDate == today);
+            .FirstOrDefaultAsync(a =>
+                a.UserId == int.Parse(userId) &&
+                a.RequestDate == dto.RequestDate.Date);
 
         if (exists != null)
             return BadRequest("Attendance already requested");
@@ -197,14 +307,15 @@ public class AttendanceController : ControllerBase
         var attendance = new AttendanceRequest
         {
             UserId = int.Parse(userId),
-            RequestDate = today,
+            RequestDate = dto.RequestDate.Date,
+            Reason = dto.Reason,
             Status = "Pending"
         };
 
         _context.AttendanceRequests.Add(attendance);
         await _context.SaveChangesAsync();
 
-        /* ===== GET USER NAME ===== */
+        /* GET USER NAME */
 
         var user = await _context.Users.FindAsync(attendance.UserId);
 
@@ -214,15 +325,18 @@ public class AttendanceController : ControllerBase
             userId = attendance.UserId,
             userName = user?.FullName,
             requestDate = attendance.RequestDate,
+            reason = attendance.Reason,
             status = attendance.Status
         };
 
-        /* ===== REALTIME EVENT FOR ADMIN ===== */
+        /* REALTIME UPDATE FOR ADMINS */
 
-        await _hub.Clients.All.SendAsync("NewAttendanceRequest", requestData);
+        await _hub.Clients.Group("Admins")
+            .SendAsync("NewAttendanceRequest", requestData);
 
-        return Ok(new { message = "Attendance request sent" });
+        return Ok(new { message = "Attendance request submitted" });
     }
+
 
     /* ================= ADMIN GET REQUESTS ================= */
 
@@ -239,12 +353,14 @@ public class AttendanceController : ControllerBase
                 a.UserId,
                 userName = a.User.FullName,
                 requestDate = a.RequestDate,
+                reason = a.Reason,
                 status = a.Status
             })
             .ToListAsync();
 
         return Ok(data);
     }
+
 
     /* ================= ADMIN APPROVE ================= */
 
@@ -263,24 +379,26 @@ public class AttendanceController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        /* ===== UPDATE ADMIN TABLE REALTIME ===== */
+        /* UPDATE ADMIN TABLE REALTIME */
 
-        await _hub.Clients.All.SendAsync("AttendanceStatusUpdated", new
-        {
-            id = attendance.Id,
-            status = "Approved"
-        });
+        await _hub.Clients.Group("Admins")
+            .SendAsync("AttendanceStatusUpdated", new
+            {
+                id = attendance.Id,
+                status = "Approved"
+            });
 
-        /* ===== NOTIFY USER ===== */
+        /* NOTIFY USER */
 
         await _hub.Clients.Group($"User_{attendance.UserId}")
-        .SendAsync("AttendanceApproved", new
-        {
-            date = attendance.RequestDate
-        });
+            .SendAsync("AttendanceApproved", new
+            {
+                date = attendance.RequestDate
+            });
 
         return Ok(new { message = "Attendance approved" });
     }
+
 
     /* ================= ADMIN REJECT ================= */
 
@@ -299,24 +417,26 @@ public class AttendanceController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        /* ===== UPDATE ADMIN TABLE REALTIME ===== */
+        /* UPDATE ADMIN TABLE REALTIME */
 
-        await _hub.Clients.All.SendAsync("AttendanceStatusUpdated", new
-        {
-            id = attendance.Id,
-            status = "Rejected"
-        });
+        await _hub.Clients.Group("Admins")
+            .SendAsync("AttendanceStatusUpdated", new
+            {
+                id = attendance.Id,
+                status = "Rejected"
+            });
 
-        /* ===== NOTIFY USER ===== */
+        /* NOTIFY USER */
 
         await _hub.Clients.Group($"User_{attendance.UserId}")
-        .SendAsync("AttendanceRejected", new
-        {
-            date = attendance.RequestDate
-        });
+            .SendAsync("AttendanceRejected", new
+            {
+                date = attendance.RequestDate
+            });
 
         return Ok(new { message = "Attendance rejected" });
     }
+
 
     /* ================= USER GET MY ATTENDANCE ================= */
 
@@ -334,7 +454,8 @@ public class AttendanceController : ControllerBase
             .Select(a => new
             {
                 date = a.RequestDate.Date,
-                status = a.Status
+                status = a.Status,
+                reason = a.Reason
             })
             .ToListAsync();
 

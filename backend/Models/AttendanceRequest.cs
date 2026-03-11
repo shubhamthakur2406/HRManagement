@@ -10,6 +10,8 @@
 
         public string Status { get; set; } = "Pending";
 
+        public string? Reason { get; set; }
+
         public User User { get; set; }
     }
 }

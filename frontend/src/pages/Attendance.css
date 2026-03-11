@@ -210,3 +210,134 @@ color:#f59e0b;
 .status.not-marked{
 color:#64748b;
 }
+
+
+/* ================= MODAL OVERLAY ================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* ================= MODAL CARD ================= */
+
+.modern-modal {
+  width: 420px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 35px;
+  text-align: center;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+  animation: modalPop 0.25s ease;
+}
+
+/* ================= TITLE ================= */
+
+.modern-modal h3 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+/* ================= DATE TEXT ================= */
+
+.modern-modal p {
+  font-size: 15px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+/* ================= TEXTAREA ================= */
+
+.modern-modal textarea {
+  width: 100%;
+  min-height: 70px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 10px 12px;
+  font-size: 14px;
+  resize: none;
+  transition: 0.2s;
+  margin-bottom: 20px;
+}
+
+.modern-modal textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+/* ================= BUTTON GROUP ================= */
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ================= CANCEL BUTTON ================= */
+
+.btn-cancel {
+  background: #ef4444;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(197, 34, 48, 0.4);
+}
+
+.btn-cancel:disabled {
+  background: #dc2626;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+/* ================= SUBMIT BUTTON ================= */
+
+.btn-approve {
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-approve:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(34,197,94,0.4);
+}
+
+.btn-approve:disabled {
+  background: #28a935;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ================= POP ANIMATION ================= */
+
+@keyframes modalPop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

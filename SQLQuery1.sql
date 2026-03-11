@@ -58,3 +58,6 @@ CREATE TABLE AttendanceRequests (
 
 CREATE UNIQUE INDEX UX_User_RequestDay
 ON AttendanceRequests(UserId, RequestDay);
+
+ALTER TABLE AttendanceRequests
+ADD Reason NVARCHAR(500) NULL;
