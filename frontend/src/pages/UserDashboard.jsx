@@ -14,8 +14,11 @@ const UserDashboard = () => {
 
   const unreadCount = notifications.filter(n => !readIds.has(n.id)).length;
 
-  // ── Save to server (debounced 500ms so we don't spam on rapid clicks) ──
+  // ── Save to server (debounced 500ms) + notify Navbar instantly ──
   const saveToServer = useCallback((ids) => {
+    // Fire event immediately so Navbar badge updates without waiting
+    window.dispatchEvent(new CustomEvent("notif-read-updated", { detail: [...ids] }));
+
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
       fetch(`${BASE_URL}/api/user/read-notifications`, {

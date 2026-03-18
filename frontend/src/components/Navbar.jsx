@@ -51,8 +51,25 @@ function Navbar() {
     refreshFromServer();
   }, [role, token]);
 
-  // ── 2. Re-count on route change ───────────────────────────────────────
-  //    When user navigates away from dashboard after marking read
+  // ── 2. Listen for read-updated event from UserDashboard ──────────────
+  //    Dashboard fires this instantly when user marks a notification read
+  //    so the navbar badge updates in real time without a server round-trip
+  useEffect(() => {
+    if (role !== "User") return;
+
+    const handleReadUpdated = (e) => {
+      const updatedReadIds = new Set(e.detail);
+      readIdsRef.current = updatedReadIds;
+      setUnreadCount(
+        notificationsRef.current.filter(n => !updatedReadIds.has(n.id)).length
+      );
+    };
+
+    window.addEventListener("notif-read-updated", handleReadUpdated);
+    return () => window.removeEventListener("notif-read-updated", handleReadUpdated);
+  }, [role]);
+
+  // ── 3. Re-count on route change ───────────────────────────────────────
   useEffect(() => {
     if (role !== "User") return;
     setUnreadCount(
@@ -60,7 +77,7 @@ function Navbar() {
     );
   }, [location.pathname]);
 
-  // ── 3. SignalR live updates ───────────────────────────────────────────
+  // ── 4. SignalR live updates ───────────────────────────────────────────
   useEffect(() => {
     if (role !== "User" || !token) return;
 
@@ -80,7 +97,6 @@ function Navbar() {
     connection.on("ReceiveNotification", (notification) => {
       const currentIds = new Set(notificationsRef.current.map(n => n.id));
       if (currentIds.has(notification.id)) {
-        // Update existing
         notificationsRef.current = notificationsRef.current.map(n =>
           n.id === notification.id ? notification : n
         );
