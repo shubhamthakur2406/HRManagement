@@ -61,3 +61,28 @@ ON AttendanceRequests(UserId, RequestDay);
 
 ALTER TABLE AttendanceRequests
 ADD Reason NVARCHAR(500) NULL;
+
+CREATE TABLE LeaveBalances (
+    Id INT PRIMARY KEY IDENTITY,
+    UserId INT NOT NULL,
+    TotalLeaves INT NOT NULL,
+    UsedLeaves INT DEFAULT 0,
+    RemainingLeaves AS (TotalLeaves - UsedLeaves),
+    FOREIGN KEY (UserId) REFERENCES Users(Id)
+);
+
+CREATE TABLE LeaveRequests (
+    Id INT PRIMARY KEY IDENTITY,
+    UserId INT NOT NULL,
+    FromDate DATE NOT NULL,
+    ToDate DATE NOT NULL,
+    Reason NVARCHAR(500),
+    Days INT NOT NULL,
+    Status NVARCHAR(20) DEFAULT 'Pending',
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (UserId) REFERENCES Users(Id)
+);
+
+-- ✅ NEW: Store read notification IDs per user (comma-separated)
+ALTER TABLE Users
+ADD ReadNotificationIds NVARCHAR(MAX) NULL DEFAULT '';

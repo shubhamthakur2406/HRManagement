@@ -9,63 +9,69 @@ function AdminUserSearch() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  /* ================= FETCH DEPARTMENTS ================= */
+  const getInitials = (n) => {
+    if (!n) return "?";
+    return n.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const avatarColor = (n) => {
+    const colors = ["#4F46E5","#7C3AED","#0891B2","#059669","#D97706","#DC2626","#DB2777"];
+    if (!n) return colors[0];
+    return colors[n.charCodeAt(0) % colors.length];
+  };
+
   useEffect(() => {
     axios.get("/departments")
       .then(res => setDepartments(res.data))
       .catch(err => console.error(err));
   }, []);
 
-  /* ================= LOAD USERS ================= */
   useEffect(() => {
-
     const fetchUsers = async () => {
       try {
         setLoading(true);
-
-        // If no search text → load ALL users
         if (name.trim() === "") {
           const res = await axios.get("/admin/users");
           setUsers(res.data.users || res.data);
-          setLoading(false);
-          return;
+        } else {
+          const res = await axios.get("/admin/users/search", {
+            params: { name, departmentId: departmentId || null }
+          });
+          setUsers(res.data);
         }
-
-        // If search text exists → search API
-        const res = await axios.get("/admin/users/search", {
-          params: {
-            name,
-            departmentId: departmentId || null
-          }
-        });
-
-        setUsers(res.data);
-        setLoading(false);
-
       } catch (error) {
         console.error("Error loading users:", error);
         setUsers([]);
+      } finally {
         setLoading(false);
       }
     };
-
     fetchUsers();
-
   }, [name, departmentId]);
 
   return (
     <div className="search-page">
-      <h2>Search Users</h2>
 
-      {/* SEARCH CONTROLS */}
+      <div className="search-page-header">
+        <h2>Search Users</h2>
+        {!loading && users.length > 0 && (
+          <span className="search-result-badge">{users.length} found</span>
+        )}
+      </div>
+
       <div className="search-controls">
-
-        <input
-          className="search-input"
-          placeholder="Search by name"
-          value={name}
-          onChange={e => setName(e.target.value)}
-        />
+        <div className="search-input-wrapper">
+          <svg className="search-icon" viewBox="0 0 20 20" fill="none">
+            <circle cx="9" cy="9" r="6" stroke="#9CA3AF" strokeWidth="1.5"/>
+            <path d="M13.5 13.5L17 17" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <input
+            className="search-input"
+            placeholder="Search by name..."
+            value={name}
+            onChange={e => setName(e.target.value)}
+          />
+        </div>
 
         <select
           className="search-select"
@@ -74,14 +80,11 @@ function AdminUserSearch() {
         >
           <option value="">All Departments</option>
           {departments.map(d => (
-            <option key={d.id} value={d.id}>
-              {d.departmentName}
-            </option>
+            <option key={d.id} value={d.id}>{d.departmentName}</option>
           ))}
         </select>
       </div>
 
-      {/* TABLE */}
       <div className="search-table-wrapper">
         <table className="search-table">
           <thead>
@@ -93,23 +96,24 @@ function AdminUserSearch() {
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan="3" className="no-results">
-                  Loading...
-                </td>
-              </tr>
+              <tr><td colSpan="3" className="no-results">Loading...</td></tr>
             ) : users.length === 0 ? (
-              <tr>
-                <td colSpan="3" className="no-results">
-                  No users found
-                </td>
-              </tr>
+              <tr><td colSpan="3" className="no-results">No users found</td></tr>
             ) : (
               users.map(u => (
                 <tr key={u.id}>
-                  <td>{u.fullName}</td>
-                  <td>{u.email}</td>
-                  <td>{u.departmentName}</td>
+                  <td>
+                    <div className="search-user-cell">
+                      <div className="search-user-avatar" style={{ background: avatarColor(u.fullName) }}>
+                        {getInitials(u.fullName)}
+                      </div>
+                      <span>{u.fullName}</span>
+                    </div>
+                  </td>
+                  <td className="search-email">{u.email}</td>
+                  <td>
+                    <span className="search-dept-badge">{u.departmentName}</span>
+                  </td>
                 </tr>
               ))
             )}

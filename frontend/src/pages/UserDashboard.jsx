@@ -1,113 +1,177 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
 import { useNavigate } from "react-router-dom";
 import "./UserNotifications.css";
 
+const BASE_URL = "https://localhost:7130";
+
 const UserDashboard = () => {
   const [notifications, setNotifications] = useState([]);
+  const [readIds, setReadIds] = useState(new Set());
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const saveTimeoutRef = useRef(null);
 
-  // 🔹 1️⃣ Fetch existing notifications
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const res = await fetch(
-          "https://localhost:7130/api/user/notifications",
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
+  const unreadCount = notifications.filter(n => !readIds.has(n.id)).length;
 
-        if (!res.ok) throw new Error("Failed to fetch");
-
-        const data = await res.json();
-        setNotifications(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchNotifications();
+  // ── Save to server (debounced 500ms so we don't spam on rapid clicks) ──
+  const saveToServer = useCallback((ids) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      fetch(`${BASE_URL}/api/user/read-notifications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify([...ids])
+      }).catch(() => {});
+    }, 500);
   }, [token]);
 
-  // 🔹 2️⃣ SignalR Real-Time Setup (NEW CLEAN CONNECTION)
+  // Mark a single notification as read
+  const markRead = useCallback((id, e) => {
+    if (e) e.stopPropagation();
+    setReadIds(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      saveToServer(next);
+      return next;
+    });
+  }, [saveToServer]);
+
+  // Mark ALL as read
+  const markAllRead = useCallback(() => {
+    setReadIds(prev => {
+      const next = new Set(prev);
+      notifications.forEach(n => next.add(n.id));
+      saveToServer(next);
+      return next;
+    });
+  }, [notifications, saveToServer]);
+
+  const timeAgo = (dateStr) => {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 172800) return "Yesterday";
+    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  };
+
+  // Fetch notifications + read IDs from server
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const [notifRes, readRes] = await Promise.all([
+          fetch(`${BASE_URL}/api/user/notifications`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch(`${BASE_URL}/api/user/read-notifications`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        const notifData = notifRes.ok ? await notifRes.json() : [];
+        const readData  = readRes.ok  ? await readRes.json()  : [];
+
+        setNotifications(notifData);
+        setReadIds(new Set(readData));
+      } catch (err) { console.error(err); }
+    };
+    fetchAll();
+  }, [token]);
+
+  // SignalR — new notifications arrive as unread
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("https://localhost:7130/notificationHub", {
+      .withUrl(`${BASE_URL}/notificationHub`, {
         accessTokenFactory: () => localStorage.getItem("token")
       })
       .withAutomaticReconnect()
       .build();
 
-    const startConnection = async () => {
-      try {
-        await connection.start();
-        console.log("✅ User SignalR Connected");
-      } catch (err) {
-        console.error("SignalR Error:", err);
-      }
-    };
+    connection.start().catch(err => console.error("SignalR Error:", err));
 
-    startConnection();
-
-    // 🔥 RECEIVE CREATE + UPDATE
     connection.on("ReceiveNotification", (notification) => {
-      console.log("🔥 Received:", notification);
-
-      setNotifications((prev) => {
-        const exists = prev.some((n) => n.id === notification.id);
-
-        if (exists) {
-          return prev.map((n) =>
-            n.id === notification.id ? notification : n
-          );
-        } else {
-          return [notification, ...prev];
-        }
+      setNotifications(prev => {
+        const exists = prev.some(n => n.id === notification.id);
+        if (exists) return prev.map(n => n.id === notification.id ? notification : n);
+        return [notification, ...prev];
       });
     });
 
-    // 🔥 RECEIVE DELETE
     connection.on("DeleteNotification", (id) => {
-      setNotifications((prev) =>
-        prev.filter((n) => n.id !== id)
-      );
+      setNotifications(prev => prev.filter(n => n.id !== id));
     });
 
-    return () => {
-      connection.stop();
-    };
+    return () => { connection.stop(); };
   }, []);
 
   return (
     <div className="dashboard-container">
       <div className="dashboard-card">
-        <h1 className="dashboard-title">User Dashboard</h1>
 
-        <h2 className="notification-heading">Notifications</h2>
+        <div className="dashboard-header">
+          <div className="dashboard-header-left">
+            <h1 className="dashboard-title">User Dashboard</h1>
+            {unreadCount > 0 && (
+              <span className="notif-count-badge">{unreadCount}</span>
+            )}
+          </div>
+          {unreadCount > 0 && (
+            <button className="mark-all-read-btn" onClick={markAllRead}>
+              ✓ Mark all as read
+            </button>
+          )}
+        </div>
 
-        {notifications.length === 0 && (
-          <p className="no-notification">
-            No notifications available
-          </p>
+        <p className="notification-heading">Notifications</p>
+
+        {notifications.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">
+              <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="28" fill="#EEF2FF"/>
+                <path d="M32 18a10 10 0 0 1 10 10v6l3 4H19l3-4v-6a10 10 0 0 1 10-10z" fill="#C7D2FE" stroke="#6366F1" strokeWidth="1.5"/>
+                <path d="M29 42a3 3 0 0 0 6 0" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="44" cy="20" r="5" fill="#22C55E"/>
+              </svg>
+            </div>
+            <p className="empty-title">You're all caught up!</p>
+            <p className="empty-sub">No notifications right now. Check back later.</p>
+          </div>
+        ) : (
+          notifications.map((n) => {
+            const isUnread = !readIds.has(n.id);
+            return (
+              <div
+                key={n.id}
+                className={`notification-card ${isUnread ? "notif-unread" : "notif-read"}`}
+                onClick={() => {
+                  markRead(n.id);
+                  if (n.redirectUrl) navigate(n.redirectUrl);
+                }}
+              >
+                {isUnread && <span className="unread-dot"></span>}
+                <h3>{n.title}</h3>
+                <p>{n.message}</p>
+                <div className="notif-card-footer">
+                  <span className="notif-time">{timeAgo(n.createdAt)}</span>
+                  {isUnread && (
+                    <button className="mark-read-btn" onClick={(e) => markRead(n.id, e)}>
+                      Mark as read
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
         )}
 
-        {notifications.map((n) => (
-          <div
-            key={n.id}
-            className="notification-card"
-            onClick={() =>
-              n.redirectUrl && navigate(n.redirectUrl)
-            }
-          >
-            <h3>{n.title}</h3>
-            <p>{n.message}</p>
-            <span>
-              {new Date(n.createdAt).toLocaleString()}
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );

@@ -8,7 +8,6 @@ function AdminUserList() {
   const [users, setUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-
   const [showModal, setShowModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -17,79 +16,63 @@ function AdminUserList() {
   const navigate = useNavigate();
   const totalPages = Math.ceil(totalUsers / pageSize);
 
-  const loadUsers = async (page) => {
-    try {
-      const res = await axios.get("/admin/users", {
-        params: { pageNumber: page, pageSize }
-      });
-
-      setUsers(res.data.users);
-      setTotalUsers(res.data.totalUsers);
-    } catch {
-      toast.error("Failed to load users");
-    }
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  useEffect(() => {
-    loadUsers(currentPage);
-  }, [currentPage]);
+  const avatarColor = (name) => {
+    const colors = ["#4F46E5","#7C3AED","#0891B2","#059669","#D97706","#DC2626","#DB2777"];
+    if (!name) return colors[0];
+    return colors[name.charCodeAt(0) % colors.length];
+  };
 
-  /* ESC KEY SUPPORT */
+  const loadUsers = async (page) => {
+    try {
+      const res = await axios.get("/admin/users", { params: { pageNumber: page, pageSize } });
+      setUsers(res.data.users);
+      setTotalUsers(res.data.totalUsers);
+    } catch { toast.error("Failed to load users"); }
+  };
+
+  useEffect(() => { loadUsers(currentPage); }, [currentPage]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setShowModal(false);
-        setSelectedUserId(null);
-      }
+      if (e.key === "Escape") { setShowModal(false); setSelectedUserId(null); }
     };
-
-    if (showModal) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    if (showModal) window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showModal]);
 
-  const handleDeleteClick = (userId) => {
-    setSelectedUserId(userId);
-    setShowModal(true);
-  };
+  const handleDeleteClick = (userId) => { setSelectedUserId(userId); setShowModal(true); };
 
   const confirmDeleteUser = async () => {
     setIsDeleting(true);
-
     try {
       await axios.delete(`/admin/users/${selectedUserId}`);
-
       toast.success("User deleted successfully");
-
-      setShowModal(false);
-      setSelectedUserId(null);
-
+      setShowModal(false); setSelectedUserId(null);
       loadUsers(currentPage);
-    } catch {
-      toast.error("Failed to delete user");
-    }
-
+    } catch { toast.error("Failed to delete user"); }
     setIsDeleting(false);
   };
 
   const cancelDelete = () => {
-    if (!isDeleting) {
-      setShowModal(false);
-      setSelectedUserId(null);
-    }
+    if (!isDeleting) { setShowModal(false); setSelectedUserId(null); }
   };
 
   return (
     <div className="users-page">
-
       <Toaster position="top-right" />
 
-      <h2>All Users</h2>
+      {/* Title with total count */}
+      <div className="users-page-header">
+        <h2>All Users</h2>
+        {totalUsers > 0 && (
+          <span className="users-total-badge">{totalUsers} users</span>
+        )}
+      </div>
 
       <div className="users-table-wrapper">
         <table className="users-table">
@@ -102,30 +85,26 @@ function AdminUserList() {
               <th>Delete</th>
             </tr>
           </thead>
-
           <tbody>
             {users.map((u) => (
               <tr key={u.id}>
-                <td>{u.fullName}</td>
-                <td>{u.email}</td>
-                <td>{u.departmentName}</td>
-
                 <td>
-                  <button
-                    className="btn-edit"
-                    onClick={() => navigate(`/admin/edit/${u.id}`)}
-                  >
-                    Edit
-                  </button>
+                  <div className="user-name-cell">
+                    <div className="user-avatar-sm" style={{ background: avatarColor(u.fullName) }}>
+                      {getInitials(u.fullName)}
+                    </div>
+                    <span>{u.fullName}</span>
+                  </div>
                 </td>
-
+                <td>{u.email}</td>
                 <td>
-                  <button
-                    className="btn-delete"
-                    onClick={() => handleDeleteClick(u.id)}
-                  >
-                    Delete
-                  </button>
+                  <span className="dept-badge">{u.departmentName}</span>
+                </td>
+                <td>
+                  <button className="btn-edit" onClick={() => navigate(`/admin/edit/${u.id}`)}>Edit</button>
+                </td>
+                <td>
+                  <button className="btn-delete" onClick={() => handleDeleteClick(u.id)}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -133,75 +112,27 @@ function AdminUserList() {
         </table>
       </div>
 
-      {/* PAGINATION */}
-
       <div className="pagination">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((p) => p - 1)}
-        >
-          Previous
-        </button>
-
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((p) => p + 1)}
-        >
-          Next
-        </button>
+        <button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>Previous</button>
+        <span>Page {currentPage} of {totalPages}</span>
+        <button disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>Next</button>
       </div>
-
-      {/* DELETE MODAL */}
 
       {showModal && (
         <div className="modal-overlay" onClick={cancelDelete}>
-          <div
-            className="modern-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-
+          <div className="modern-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">⚠️</div>
-
             <h3>Delete User</h3>
-
-            <p>
-              This action cannot be undone.
-              <br />
-              Are you sure you want to delete this user?
-            </p>
-
+            <p>This action cannot be undone.<br/>Are you sure you want to delete this user?</p>
             <div className="modal-actions">
-
-              <button
-                className="btn-cancel"
-                onClick={cancelDelete}
-                disabled={isDeleting}
-              >
-                Cancel
+              <button className="btn-cancel" onClick={cancelDelete} disabled={isDeleting}>Cancel</button>
+              <button className="btn-danger" onClick={confirmDeleteUser} disabled={isDeleting}>
+                {isDeleting ? <span className="spinner"></span> : "Yes, Delete"}
               </button>
-
-              <button
-                className="btn-danger"
-                onClick={confirmDeleteUser}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <span className="spinner"></span>
-                ) : (
-                  "Yes, Delete"
-                )}
-              </button>
-
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

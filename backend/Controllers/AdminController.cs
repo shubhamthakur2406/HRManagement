@@ -23,7 +23,6 @@ public class AdminController : ControllerBase
         _hub = hub;
     }
 
-
     [HttpPost("notifications")]
     public async Task<IActionResult> CreateNotification(NotificationDto dto)
     {
@@ -33,14 +32,16 @@ public class AdminController : ControllerBase
             Message = dto.Message,
             RedirectUrl = dto.RedirectUrl,
             CreatedAt = DateTime.UtcNow,
+            SendToAll = dto.SendToAll,
             IsDeleted = false
         };
 
         _context.Notifications.Add(notification);
         await _context.SaveChangesAsync();
 
-        // Save user targets
-        if (dto.UserIds != null)
+        var targetUsers = new HashSet<int>();
+
+        if (dto.UserIds != null && dto.UserIds.Any())
         {
             foreach (var userId in dto.UserIds)
             {
@@ -50,13 +51,11 @@ public class AdminController : ControllerBase
                     UserId = userId
                 });
 
-                await _hub.Clients.Group($"User_{userId}")
-                    .SendAsync("ReceiveNotification", notification);
+                targetUsers.Add(userId);
             }
         }
 
-        // Save department targets
-        if (dto.DepartmentIds != null)
+        if (dto.DepartmentIds != null && dto.DepartmentIds.Any())
         {
             foreach (var deptId in dto.DepartmentIds)
             {
@@ -66,30 +65,59 @@ public class AdminController : ControllerBase
                     DepartmentId = deptId
                 });
 
-                var users = _context.Users
+                var users = await _context.Users
                     .Where(u => u.DepartmentId == deptId)
                     .Select(u => u.Id)
-                    .ToList();
+                    .ToListAsync();
 
                 foreach (var userId in users)
                 {
-                    await _hub.Clients.Group($"User_{userId}")
-                        .SendAsync("ReceiveNotification", notification);
+                    targetUsers.Add(userId);
                 }
             }
         }
 
-        if (dto.SendToAll)
-        {
-            await _hub.Clients.Group("User")
-                .SendAsync("ReceiveNotification", notification);
-        }
-
         await _context.SaveChangesAsync();
 
-        return Ok(notification);
-    }
+        var response = new
+        {
+            id = notification.Id,
+            title = notification.Title,
+            message = notification.Message,
+            redirectUrl = notification.RedirectUrl,
+            createdAt = notification.CreatedAt,
+            sendToAll = notification.SendToAll,
+            userIds = dto.UserIds ?? new List<int>(),
+            departmentIds = dto.DepartmentIds ?? new List<int>()
+        };
 
+        try
+        {
+            if (dto.SendToAll)
+            {
+                await _hub.Clients.Group("User")
+                    .SendAsync("ReceiveNotification", response);
+            }
+            else
+            {
+                foreach (var userId in targetUsers)
+                {
+                    await _hub.Clients.Group($"User_{userId}")
+                        .SendAsync("ReceiveNotification", response);
+                }
+            }
+
+            // also update admin panel realtime
+            await _hub.Clients.All
+                .SendAsync("ReceiveNotification", response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SignalR Error: " + ex.Message);
+        }
+
+        return Ok(response);
+    }
 
     [HttpPut("notifications/{id}")]
     public async Task<IActionResult> UpdateNotification(int id, NotificationDto dto)

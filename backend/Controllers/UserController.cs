@@ -1,4 +1,4 @@
-﻿using backend.Data;
+using backend.Data;
 using backend.DTOs;
 using backend.Hubs;
 using backend.Models;
@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-
-
 
 [ApiController]
 [Route("api/user")]
@@ -48,6 +46,43 @@ public class UserController : ControllerBase
         return Ok(notifications);
     }
 
+    // ✅ GET read notification IDs for this user
+    [HttpGet("read-notifications")]
+    public async Task<IActionResult> GetReadNotifications()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        var ids = string.IsNullOrEmpty(user.ReadNotificationIds)
+            ? new List<int>()
+            : user.ReadNotificationIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToList();
+
+        return Ok(ids);
+    }
+
+    // ✅ POST — save updated read notification IDs for this user
+    [HttpPost("read-notifications")]
+    public async Task<IActionResult> SaveReadNotifications([FromBody] List<int> ids)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        user.ReadNotificationIds = ids != null && ids.Count > 0
+            ? string.Join(",", ids)
+            : "";
+
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
     // 🔹 Get own profile
     [HttpGet("profile")]
     public IActionResult GetProfile()
@@ -74,7 +109,6 @@ public class UserController : ControllerBase
     [HttpPut("profile")]
     public IActionResult UpdateProfile(UserUpdateProfileDto dto)
     {
-        // ✅ Get logged-in user ID from JWT
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrEmpty(userId))
@@ -98,7 +132,6 @@ public class UserController : ControllerBase
     [HttpPut("change-password")]
     public IActionResult ChangePassword(ChangePasswordDto dto)
     {
-        // ✅ Get logged-in user ID from JWT
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrEmpty(userId))
@@ -118,8 +151,4 @@ public class UserController : ControllerBase
 
         return Ok(new { message = "Password changed successfully" });
     }
-
-
-
-   
 }

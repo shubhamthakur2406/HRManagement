@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace backend.Models;
@@ -23,6 +23,8 @@ public partial class User
 
     public bool IsDeleted { get; set; } = false;
 
+    // Stores comma-separated notification IDs the user has marked as read
+    public string? ReadNotificationIds { get; set; } = "";
 
     public virtual Department Department { get; set; } = null!;
 }

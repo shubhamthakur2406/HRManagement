@@ -4,82 +4,168 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 70px;
-  background: linear-gradient(135deg, #7e7f84, #110f13);
+  height: 68px;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e7ff;
   display: flex;
   align-items: center;
   z-index: 1000;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 12px rgba(79, 70, 229, 0.07);
 }
 
 .navbar-container {
   width: 100%;
   max-width: 1400px;
   margin: auto;
-  padding: 0 30px;
+  padding: 0 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* Logo */
+/* ===== LOGO ===== */
 .logo {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
-  color: white;
+  color: #4F46E5;
   cursor: pointer;
-  letter-spacing: 1px;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  user-select: none;
 }
 
-/* Buttons container */
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 50%, #6366F1 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.4);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.logo-icon::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+  border-radius: 10px 10px 0 0;
+  pointer-events: none;
+}
+
+.logo-icon svg {
+  width: 22px;
+  height: 22px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo:hover .logo-icon {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.5);
+}
+
+/* ===== NAV BUTTONS ===== */
 .nav-buttons {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;   /* 🔥 prevents overflow */
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
-/* Common button style */
 .nav-buttons button {
-  padding: 8px 16px;
+  padding: 7px 15px;
   border-radius: 8px;
-  border: none;
-  font-weight: 600;
+  border: 1px solid transparent;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
+  transition: all 0.2s ease;
+  font-size: 13.5px;
+  background: transparent;
+  color: #4B5563;
+  font-family: inherit;
 }
 
-/* Normal buttons */
-.nav-buttons button:not(.logout-btn) {
-  background: white;
-  color: #5a67d8;
+.nav-buttons button:not(.logout-btn):not(.nav-active):hover {
+  background: #EEF2FF;
+  color: #4F46E5;
+  border-color: #C7D2FE;
 }
 
-.nav-buttons button:not(.logout-btn):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+/* ===== ACTIVE ROUTE ===== */
+.nav-buttons button.nav-active {
+  background: #EEF2FF;
+  color: #4F46E5;
+  border-color: #C7D2FE;
+  font-weight: 600;
+  position: relative;
+}
+
+.nav-buttons button.nav-active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: #4F46E5;
+  border-radius: 2px;
+}
+
+/* ===== DASHBOARD BUTTON WITH BADGE ===== */
+.nav-btn-with-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-notif-badge {
+  background: #EF4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 /* Logout */
 .logout-btn {
-  background: #ff4d4d;
-  color: white;
+  background: #FEF2F2 !important;
+  color: #DC2626 !important;
+  border: 1px solid #FECACA !important;
+  margin-left: 8px;
 }
 
 .logout-btn:hover {
-  background: #e60000;
-  transform: translateY(-2px);
+  background: #FEE2E2 !important;
+  border-color: #FCA5A5 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15);
 }
 
-/* Responsive */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
-  .nav-buttons {
-    gap: 8px;
-  }
-
-  .nav-buttons button {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
+  .nav-buttons { gap: 3px; }
+  .nav-buttons button { padding: 6px 10px; font-size: 12px; }
+  .navbar-container { padding: 0 16px; }
+  .logo { font-size: 18px; }
+  .logo-icon { width: 32px; height: 32px; }
+  .logo-icon svg { width: 19px; height: 19px; }
 }
