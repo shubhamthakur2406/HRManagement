@@ -1,4 +1,4 @@
-﻿namespace backend.DTOs
+namespace backend.DTOs
 {
     public class UserListDto
     {
@@ -6,5 +6,6 @@
         public string FullName { get; set; }
         public string Email { get; set; }
         public string DepartmentName { get; set; }
+        public string? ProfilePicture { get; set; }
     }
 }

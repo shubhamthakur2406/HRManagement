@@ -1,5 +1,5 @@
-﻿using backend.Data;
-using backend.Hubs;   
+using backend.Data;
+using backend.Hubs;
 using backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -33,16 +33,17 @@ builder.Services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 
-    // FOR SIGNALR
+    // ✅ Pass JWT token for ALL SignalR hubs
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             var accessToken = context.Request.Query["access_token"];
-
             var path = context.HttpContext.Request.Path;
+
             if (!string.IsNullOrEmpty(accessToken) &&
-                path.StartsWithSegments("/notificationHub"))
+                (path.StartsWithSegments("/notificationHub") ||
+                 path.StartsWithSegments("/attendanceHub")))
             {
                 context.Token = accessToken;
             }
@@ -86,15 +87,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors("AllowReact");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
-// 🔥 Map SignalR Hub
+// 🔥 SignalR Hubs
 app.MapHub<NotificationHub>("/notificationHub");
 app.MapHub<AttendanceHub>("/attendanceHub");
 

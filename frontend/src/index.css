@@ -5,17 +5,15 @@ body {
   background: #F5F7FF;
   color: #1F2937;
   -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 .main-content {
   margin-top: 68px;
-  padding: 32px;
   min-height: calc(100vh - 68px);
   background: #F5F7FF;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    padding: 20px 16px;
-  }
 }

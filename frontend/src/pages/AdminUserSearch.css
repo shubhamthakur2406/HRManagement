@@ -7,12 +7,12 @@
   font-family: "Segoe UI", Tahoma, sans-serif;
 }
 
-/* Header row with result badge */
 .search-page-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 28px;
+  flex-wrap: wrap;
 }
 
 .search-page-header h2 {
@@ -32,7 +32,6 @@
   border-radius: 99px;
 }
 
-/* SEARCH CONTROLS */
 .search-controls {
   display: flex;
   gap: 16px;
@@ -40,11 +39,10 @@
   flex-wrap: wrap;
 }
 
-/* Search input with icon */
 .search-input-wrapper {
   position: relative;
   flex: 1;
-  min-width: 240px;
+  min-width: 200px;
 }
 
 .search-icon {
@@ -82,7 +80,7 @@
   border: 1.5px solid #C7D2FE;
   background: #ffffff;
   font-size: 14px;
-  min-width: 200px;
+  min-width: 180px;
   transition: 0.2s ease;
   color: #111827;
   outline: none;
@@ -94,17 +92,16 @@
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-/* TABLE WRAPPER */
 .search-table-wrapper {
   background: #ffffff;
   border-radius: 18px;
   box-shadow: 0 4px 28px rgba(79, 70, 229, 0.08);
   border: 1px solid #E0E7FF;
-  overflow: hidden;
+  overflow-x: auto; /* ✅ horizontal scroll */
+  -webkit-overflow-scrolling: touch;
 }
 
-.search-table { width: 100%; border-collapse: collapse; }
-
+.search-table { width: 100%; border-collapse: collapse; min-width: 400px; }
 .search-table thead { background: linear-gradient(135deg, #4F46E5, #6366F1); }
 
 .search-table th {
@@ -113,6 +110,7 @@
   color: white;
   font-weight: 600;
   font-size: 13.5px;
+  white-space: nowrap;
 }
 
 .search-table td {
@@ -125,7 +123,6 @@
 .search-table tbody tr:last-child td { border-bottom: none; }
 .search-table tbody tr:hover { background: #F5F7FF; }
 
-/* USER AVATAR CELL */
 .search-user-cell {
   display: flex;
   align-items: center;
@@ -144,15 +141,19 @@
   color: white;
   flex-shrink: 0;
   letter-spacing: 0.5px;
+  overflow: hidden;
 }
 
-/* Email muted */
-.search-email {
-  color: #6B7280 !important;
-  font-size: 13.5px !important;
+.avatar-table-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
-/* Department pill */
+.search-email { color: #6B7280 !important; font-size: 13.5px !important; }
+
 .search-dept-badge {
   background: #EEF2FF;
   color: #4338CA;
@@ -162,9 +163,9 @@
   padding: 4px 11px;
   border-radius: 99px;
   display: inline-block;
+  white-space: nowrap;
 }
 
-/* NO RESULTS */
 .no-results {
   text-align: center;
   padding: 36px;
@@ -173,10 +174,10 @@
   font-size: 14px;
 }
 
-/* RESPONSIVE */
 @media (max-width: 768px) {
-  .search-page { padding: 20px; }
-  .search-controls { flex-direction: column; }
+  .search-page { padding: 20px 16px; }
+  .search-page-header h2 { font-size: 22px; }
+  .search-controls { flex-direction: column; gap: 10px; }
   .search-input-wrapper, .search-select { width: 100%; min-width: unset; }
-  .search-table th, .search-table td { padding: 12px; }
+  .search-table th, .search-table td { padding: 12px 14px; font-size: 13px; }
 }

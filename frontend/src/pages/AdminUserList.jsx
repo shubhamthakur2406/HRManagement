@@ -5,15 +5,15 @@ import toast, { Toaster } from "react-hot-toast";
 import "./AdminUserList.css";
 
 function AdminUserList() {
-  const [users, setUsers] = useState([]);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
+  const [users, setUsers]               = useState([]);
+  const [totalUsers, setTotalUsers]     = useState(0);
+  const [currentPage, setCurrentPage]   = useState(1);
+  const [showModal, setShowModal]       = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting]     = useState(false);
 
-  const pageSize = 10;
-  const navigate = useNavigate();
+  const pageSize  = 10;
+  const navigate  = useNavigate();
   const totalPages = Math.ceil(totalUsers / pageSize);
 
   const getInitials = (name) => {
@@ -45,7 +45,7 @@ function AdminUserList() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showModal]);
 
-  const handleDeleteClick = (userId) => { setSelectedUserId(userId); setShowModal(true); };
+  const handleDeleteClick   = (userId) => { setSelectedUserId(userId); setShowModal(true); };
 
   const confirmDeleteUser = async () => {
     setIsDeleting(true);
@@ -66,7 +66,6 @@ function AdminUserList() {
     <div className="users-page">
       <Toaster position="top-right" />
 
-      {/* Title with total count */}
       <div className="users-page-header">
         <h2>All Users</h2>
         {totalUsers > 0 && (
@@ -90,8 +89,15 @@ function AdminUserList() {
               <tr key={u.id}>
                 <td>
                   <div className="user-name-cell">
-                    <div className="user-avatar-sm" style={{ background: avatarColor(u.fullName) }}>
-                      {getInitials(u.fullName)}
+                    {/* ✅ Show profile picture if available, else initials */}
+                    <div
+                      className="user-avatar-sm"
+                      style={{ background: u.profilePicture ? "transparent" : avatarColor(u.fullName) }}
+                    >
+                      {u.profilePicture
+                        ? <img src={u.profilePicture} alt={u.fullName} className="avatar-table-img" />
+                        : getInitials(u.fullName)
+                      }
                     </div>
                     <span>{u.fullName}</span>
                   </div>

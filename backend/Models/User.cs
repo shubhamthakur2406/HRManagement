@@ -26,5 +26,8 @@ public partial class User
     // Stores comma-separated notification IDs the user has marked as read
     public string? ReadNotificationIds { get; set; } = "";
 
+    // Stores profile picture as Base64 string
+    public string? ProfilePicture { get; set; }
+
     public virtual Department Department { get; set; } = null!;
 }

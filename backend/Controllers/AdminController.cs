@@ -1,4 +1,4 @@
-﻿using backend.Data;
+using backend.Data;
 using backend.DTOs;
 using backend.Hubs;
 using backend.Models;
@@ -50,7 +50,6 @@ public class AdminController : ControllerBase
                     NotificationId = notification.Id,
                     UserId = userId
                 });
-
                 targetUsers.Add(userId);
             }
         }
@@ -71,9 +70,7 @@ public class AdminController : ControllerBase
                     .ToListAsync();
 
                 foreach (var userId in users)
-                {
                     targetUsers.Add(userId);
-                }
             }
         }
 
@@ -107,9 +104,7 @@ public class AdminController : ControllerBase
                 }
             }
 
-            // also update admin panel realtime
-            await _hub.Clients.All
-                .SendAsync("ReceiveNotification", response);
+            await _hub.Clients.All.SendAsync("ReceiveNotification", response);
         }
         catch (Exception ex)
         {
@@ -128,55 +123,34 @@ public class AdminController : ControllerBase
         if (notification == null)
             return NotFound("Notification not found");
 
-        // 🔹 Update fields
         notification.Title = dto.Title;
         notification.Message = dto.Message;
         notification.RedirectUrl = dto.RedirectUrl;
         notification.SendToAll = dto.SendToAll;
 
-        // 🔹 Remove old mappings
-        var oldUsers = _context.NotificationUsers
-            .Where(x => x.NotificationId == id);
-
-        var oldDepartments = _context.NotificationDepartments
-            .Where(x => x.NotificationId == id);
-
+        var oldUsers = _context.NotificationUsers.Where(x => x.NotificationId == id);
+        var oldDepartments = _context.NotificationDepartments.Where(x => x.NotificationId == id);
         _context.NotificationUsers.RemoveRange(oldUsers);
         _context.NotificationDepartments.RemoveRange(oldDepartments);
-
         await _context.SaveChangesAsync();
 
-        // 🔹 Add new mappings if NOT SendToAll
         if (!dto.SendToAll)
         {
             if (dto.UserIds != null)
             {
                 foreach (var userId in dto.UserIds)
-                {
-                    _context.NotificationUsers.Add(new NotificationUser
-                    {
-                        NotificationId = id,
-                        UserId = userId
-                    });
-                }
+                    _context.NotificationUsers.Add(new NotificationUser { NotificationId = id, UserId = userId });
             }
 
             if (dto.DepartmentIds != null)
             {
                 foreach (var deptId in dto.DepartmentIds)
-                {
-                    _context.NotificationDepartments.Add(new NotificationDepartment
-                    {
-                        NotificationId = id,
-                        DepartmentId = deptId
-                    });
-                }
+                    _context.NotificationDepartments.Add(new NotificationDepartment { NotificationId = id, DepartmentId = deptId });
             }
 
             await _context.SaveChangesAsync();
         }
 
-        // 🔥 Build camelCase response (VERY IMPORTANT)
         var response = new
         {
             id = notification.Id,
@@ -186,22 +160,14 @@ public class AdminController : ControllerBase
             createdAt = notification.CreatedAt,
             sendToAll = notification.SendToAll,
             userIds = await _context.NotificationUsers
-                .Where(x => x.NotificationId == id)
-                .Select(x => x.UserId)
-                .ToListAsync(),
+                .Where(x => x.NotificationId == id).Select(x => x.UserId).ToListAsync(),
             departmentIds = await _context.NotificationDepartments
-                .Where(x => x.NotificationId == id)
-                .Select(x => x.DepartmentId)
-                .ToListAsync()
+                .Where(x => x.NotificationId == id).Select(x => x.DepartmentId).ToListAsync()
         };
 
-        // 🔥 Real-time broadcast (safe way)
-        await _hub.Clients.All
-            .SendAsync("ReceiveNotification", response);
-
+        await _hub.Clients.All.SendAsync("ReceiveNotification", response);
         return Ok(response);
     }
-
 
     [HttpDelete("notifications/{id}")]
     public async Task<IActionResult> SoftDeleteNotification(int id)
@@ -220,20 +186,13 @@ public class AdminController : ControllerBase
             .ToListAsync();
 
         foreach (var userId in users)
-        {
-            await _hub.Clients.Group($"User_{userId}")
-                .SendAsync("DeleteNotification", id);
-        }
+            await _hub.Clients.Group($"User_{userId}").SendAsync("DeleteNotification", id);
 
-        await _hub.Clients.All
-        .SendAsync("DeleteNotification", id);
-
+        await _hub.Clients.All.SendAsync("DeleteNotification", id);
         await _context.SaveChangesAsync();
 
         return Ok("Notification deleted successfully");
     }
-
-
 
     [HttpGet("notifications")]
     public async Task<IActionResult> GetAllNotifications()
@@ -246,8 +205,7 @@ public class AdminController : ControllerBase
         return Ok(notifications);
     }
 
-
-    // ✅ GET ALL USERS WITH PAGINATION
+    // ✅ GET ALL USERS — includes ProfilePicture
     [HttpGet("users")]
     public IActionResult GetAllUsers(int pageNumber = 1, int pageSize = 10)
     {
@@ -262,9 +220,10 @@ public class AdminController : ControllerBase
             .Take(pageSize)
             .Select(u => new UserListDto
             {
-                Id = u.Id,
-                FullName = u.FullName,
-                Email = u.Email,
+                Id             = u.Id,
+                FullName       = u.FullName,
+                Email          = u.Email,
+                ProfilePicture = u.ProfilePicture,
                 DepartmentName = _context.Departments
                     .Where(d => d.Id == u.DepartmentId)
                     .Select(d => d.DepartmentName)
@@ -272,16 +231,10 @@ public class AdminController : ControllerBase
             })
             .ToList();
 
-        return Ok(new
-        {
-            totalUsers,
-            pageSize,
-            users
-        });
+        return Ok(new { totalUsers, pageSize, users });
     }
 
-
-    // ✅ GET USER BY ID (FOR EDIT) — EXCLUDES DELETED USERS
+    // ✅ GET USER BY ID
     [HttpGet("users/{id}")]
     public IActionResult GetUserById(int id)
     {
@@ -298,34 +251,30 @@ public class AdminController : ControllerBase
             })
             .FirstOrDefault();
 
-        if (user == null)
-            return NotFound("User not found");
-
+        if (user == null) return NotFound("User not found");
         return Ok(user);
     }
 
-    // ✅ UPDATE USER (ADMIN) — ONLY IF NOT DELETED
+    // ✅ UPDATE USER
     [HttpPut("users/{id}")]
     public IActionResult UpdateUser(int id, AdminUpdateUserDto dto)
     {
         var user = _context.Users
             .FirstOrDefault(u => u.Id == id && u.Role == "User" && !u.IsDeleted);
 
-        if (user == null)
-            return NotFound("User not found");
+        if (user == null) return NotFound("User not found");
 
-        user.FullName = dto.FullName;
-        user.Email = dto.Email;
-        user.Address = dto.Address;
-        user.PhoneNumber = dto.PhoneNumber;
+        user.FullName     = dto.FullName;
+        user.Email        = dto.Email;
+        user.Address      = dto.Address;
+        user.PhoneNumber  = dto.PhoneNumber;
         user.DepartmentId = dto.DepartmentId;
 
         _context.SaveChanges();
-
         return Ok("User updated successfully");
     }
 
-    // 🔎 SEARCH USERS — EXCLUDES DELETED USERS
+    // ✅ SEARCH USERS — includes ProfilePicture
     [HttpGet("users/search")]
     public IActionResult SearchUsers(string? name, int? departmentId)
     {
@@ -337,32 +286,25 @@ public class AdminController : ControllerBase
                 d => d.Id,
                 (u, d) => new UserListDto
                 {
-                    Id = u.Id,
-                    FullName = u.FullName,
-                    Email = u.Email,
+                    Id             = u.Id,
+                    FullName       = u.FullName,
+                    Email          = u.Email,
+                    ProfilePicture = u.ProfilePicture,
                     DepartmentName = d.DepartmentName
                 }
             );
 
         if (!string.IsNullOrEmpty(name))
-        {
-            query = query.Where(u =>
-                u.FullName.ToLower().Contains(name.ToLower()));
-        }
+            query = query.Where(u => u.FullName.ToLower().Contains(name.ToLower()));
 
         if (departmentId.HasValue)
-        {
             query = query.Where(u =>
-                _context.Users.Any(x =>
-                    x.Id == u.Id &&
-                    x.DepartmentId == departmentId &&
-                    !x.IsDeleted));
-        }
+                _context.Users.Any(x => x.Id == u.Id && x.DepartmentId == departmentId && !x.IsDeleted));
 
         return Ok(query.ToList());
     }
 
-    // 🔤 AUTOCOMPLETE SUGGESTIONS — EXCLUDES DELETED USERS
+    // ✅ AUTOCOMPLETE SUGGESTIONS
     [HttpGet("users/suggestions")]
     public IActionResult GetUserSuggestions(string query)
     {
@@ -370,8 +312,7 @@ public class AdminController : ControllerBase
             return Ok(new List<string>());
 
         var names = _context.Users
-            .Where(u => u.Role == "User" &&
-                        !u.IsDeleted &&
+            .Where(u => u.Role == "User" && !u.IsDeleted &&
                         u.FullName.ToLower().StartsWith(query.ToLower()))
             .Select(u => u.FullName)
             .Distinct()
@@ -381,22 +322,17 @@ public class AdminController : ControllerBase
         return Ok(names);
     }
 
-    // 🗑️ SOFT DELETE USER (ADMIN)
+    // ✅ SOFT DELETE USER
     [HttpDelete("users/{id}")]
     public IActionResult SoftDeleteUser(int id)
     {
         var user = _context.Users
             .FirstOrDefault(u => u.Id == id && u.Role == "User" && !u.IsDeleted);
 
-        if (user == null)
-            return NotFound("User not found");
+        if (user == null) return NotFound("User not found");
 
         user.IsDeleted = true;
         _context.SaveChanges();
-
         return Ok("User deleted successfully");
     }
-
- 
-
 }

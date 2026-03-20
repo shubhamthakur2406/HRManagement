@@ -14,14 +14,12 @@ CREATE TABLE Users (
     PhoneNumber NVARCHAR(15),
     DepartmentId INT NOT NULL,
     Role NVARCHAR(20) NOT NULL,
-
     CONSTRAINT FK_Users_Departments
     FOREIGN KEY (DepartmentId) REFERENCES Departments(Id)
 );
 INSERT INTO Departments (DepartmentName)
 VALUES ('HR'), ('IT'), ('Finance'), ('Sales');
-ALTER TABLE Users
-ADD IsDeleted BIT NOT NULL DEFAULT 0;
+ALTER TABLE Users ADD IsDeleted BIT NOT NULL DEFAULT 0;
 
 CREATE TABLE Notifications (
     Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -45,8 +43,7 @@ CREATE TABLE NotificationDepartments (
     FOREIGN KEY (NotificationId) REFERENCES Notifications(Id),
     FOREIGN KEY (DepartmentId) REFERENCES Departments(Id)
 );
-ALTER TABLE Notifications
-ADD SendToAll BIT NOT NULL DEFAULT 0;
+ALTER TABLE Notifications ADD SendToAll BIT NOT NULL DEFAULT 0;
 
 CREATE TABLE AttendanceRequests (
     Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -55,34 +52,32 @@ CREATE TABLE AttendanceRequests (
     RequestDay AS CAST(RequestDate AS DATE) PERSISTED,
     Status NVARCHAR(20) NOT NULL DEFAULT 'Pending'
 );
+CREATE UNIQUE INDEX UX_User_RequestDay ON AttendanceRequests(UserId, RequestDay);
+ALTER TABLE AttendanceRequests ADD Reason NVARCHAR(500) NULL;
 
-CREATE UNIQUE INDEX UX_User_RequestDay
-ON AttendanceRequests(UserId, RequestDay);
+ALTER TABLE Users ADD ReadNotificationIds NVARCHAR(MAX) NULL DEFAULT '';
 
-ALTER TABLE AttendanceRequests
-ADD Reason NVARCHAR(500) NULL;
+
+ALTER TABLE Users ADD ProfilePicture NVARCHAR(MAX) NULL;
+
 
 CREATE TABLE LeaveBalances (
-    Id INT PRIMARY KEY IDENTITY,
-    UserId INT NOT NULL,
-    TotalLeaves INT NOT NULL,
-    UsedLeaves INT DEFAULT 0,
-    RemainingLeaves AS (TotalLeaves - UsedLeaves),
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL UNIQUE,
+    TotalLeaves INT NOT NULL DEFAULT 0,
+    UsedLeaves INT NOT NULL DEFAULT 0,
     FOREIGN KEY (UserId) REFERENCES Users(Id)
 );
 
 CREATE TABLE LeaveRequests (
-    Id INT PRIMARY KEY IDENTITY,
+    Id INT IDENTITY(1,1) PRIMARY KEY,
     UserId INT NOT NULL,
     FromDate DATE NOT NULL,
     ToDate DATE NOT NULL,
-    Reason NVARCHAR(500),
+    Reason NVARCHAR(500) NOT NULL,
     Days INT NOT NULL,
-    Status NVARCHAR(20) DEFAULT 'Pending',
-    CreatedAt DATETIME DEFAULT GETDATE(),
+    Status NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+    CreatedAt DATETIME NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (UserId) REFERENCES Users(Id)
 );
 
--- ✅ NEW: Store read notification IDs per user (comma-separated)
-ALTER TABLE Users
-ADD ReadNotificationIds NVARCHAR(MAX) NULL DEFAULT '';

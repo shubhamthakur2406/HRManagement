@@ -7,12 +7,12 @@
   font-family: "Segoe UI", Tahoma, sans-serif;
 }
 
-/* Header row with title + badge */
 .users-page-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 28px;
+  flex-wrap: wrap;
 }
 
 .users-page-header h2 {
@@ -32,7 +32,6 @@
   border-radius: 99px;
 }
 
-/* USER NAME CELL */
 .user-name-cell {
   display: flex;
   align-items: center;
@@ -51,9 +50,17 @@
   color: white;
   flex-shrink: 0;
   letter-spacing: 0.5px;
+  overflow: hidden;
 }
 
-/* DEPARTMENT BADGE */
+.avatar-table-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
 .dept-badge {
   background: #EEF2FF;
   color: #4338CA;
@@ -63,19 +70,19 @@
   padding: 4px 10px;
   border-radius: 99px;
   display: inline-block;
+  white-space: nowrap;
 }
 
-/* TABLE WRAPPER */
 .users-table-wrapper {
   background: #ffffff;
   border-radius: 18px;
   box-shadow: 0 4px 28px rgba(79, 70, 229, 0.08);
   border: 1px solid #E0E7FF;
-  overflow: hidden;
+  overflow-x: auto; /* ✅ horizontal scroll on mobile */
+  -webkit-overflow-scrolling: touch;
 }
 
-.users-table { width: 100%; border-collapse: collapse; }
-
+.users-table { width: 100%; border-collapse: collapse; min-width: 500px; }
 .users-table thead { background: linear-gradient(135deg, #4F46E5, #6366F1); }
 
 .users-table th {
@@ -85,6 +92,7 @@
   font-weight: 600;
   font-size: 13.5px;
   letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .users-table td {
@@ -107,9 +115,10 @@
   font-weight: 600;
   font-size: 13px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.btn-edit:hover { background: #F59E0B; color: white; border-color: #F59E0B; box-shadow: 0 4px 12px rgba(245,158,11,0.35); }
+.btn-edit:hover { background: #F59E0B; color: white; border-color: #F59E0B; }
 
 .btn-delete {
   background: #FEE2E2;
@@ -121,17 +130,18 @@
   font-weight: 600;
   font-size: 13px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.btn-delete:hover { background: #EF4444; color: white; border-color: #EF4444; box-shadow: 0 4px 12px rgba(239,68,68,0.35); }
+.btn-delete:hover { background: #EF4444; color: white; border-color: #EF4444; }
 
-/* PAGINATION */
 .pagination {
   margin-top: 28px;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .pagination button {
@@ -146,7 +156,7 @@
   transition: all 0.2s ease;
 }
 
-.pagination button:hover:not(:disabled) { background: #EEF2FF; box-shadow: 0 4px 14px rgba(79,70,229,0.15); transform: translateY(-1px); }
+.pagination button:hover:not(:disabled) { background: #EEF2FF; transform: translateY(-1px); }
 .pagination button:disabled { opacity: 0.4; cursor: not-allowed; border-color: #E5E7EB; color: #9CA3AF; }
 .pagination span { font-weight: 600; color: #4B5563; font-size: 14px; }
 
@@ -160,11 +170,13 @@
   justify-content: center;
   align-items: center;
   z-index: 9999;
+  padding: 16px;
 }
 
 .modern-modal {
   background: #ffffff;
-  width: 420px;
+  width: 100%;
+  max-width: 420px;
   padding: 36px;
   border-radius: 20px;
   text-align: center;
@@ -176,8 +188,7 @@
 .modal-icon { font-size: 40px; margin-bottom: 14px; }
 .modern-modal h3 { margin-bottom: 10px; color: #1E1B4B; font-size: 20px; font-weight: 700; }
 .modern-modal p  { color: #6B7280; line-height: 1.6; margin-bottom: 24px; font-size: 14px; }
-
-.modal-actions { display: flex; justify-content: center; gap: 14px; }
+.modal-actions { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
 
 .btn-danger {
   background: linear-gradient(135deg, #EF4444, #DC2626);
@@ -218,11 +229,11 @@
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes spin   { to { transform: rotate(360deg); } }
+@keyframes popIn  { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 @media (max-width: 768px) {
-  .users-page { padding: 20px; }
-  .users-table th, .users-table td { padding: 12px; font-size: 13px; }
-  .modern-modal { width: 90%; }
+  .users-page { padding: 20px 16px; }
+  .users-page-header h2 { font-size: 22px; }
+  .modern-modal { padding: 28px 20px; }
 }

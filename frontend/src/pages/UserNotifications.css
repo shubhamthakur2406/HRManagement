@@ -52,7 +52,6 @@
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
 }
 
-/* Mark all as read button */
 .mark-all-read-btn {
   background: #EEF2FF;
   color: #4F46E5;
@@ -83,7 +82,7 @@
   color: #6B7280;
 }
 
-/* ===== NOTIFICATION CARD — base ===== */
+/* ===== NOTIFICATION CARD ===== */
 .notification-card {
   position: relative;
   padding: 18px 20px 14px 22px;
@@ -95,7 +94,6 @@
   cursor: pointer;
 }
 
-/* ===== UNREAD — indigo #6366F1 ===== */
 .notification-card.notif-unread {
   background: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%);
   border-color: #C7D2FE;
@@ -110,21 +108,10 @@
   border-left-color: #4F46E5;
 }
 
-.notification-card.notif-unread h3 {
-  color: #3730A3;
-  font-weight: 700;
-}
+.notification-card.notif-unread h3 { color: #3730A3; font-weight: 700; }
+.notification-card.notif-unread p  { color: #4338CA; opacity: 0.85; }
+.notification-card.notif-unread .notif-time { color: #818CF8; }
 
-.notification-card.notif-unread p {
-  color: #4338CA;
-  opacity: 0.85;
-}
-
-.notification-card.notif-unread .notif-time {
-  color: #818CF8;
-}
-
-/* ===== READ — green #22C55E ===== */
 .notification-card.notif-read {
   background: #F0FDF4;
   border-color: #BBF7D0;
@@ -138,20 +125,10 @@
   background: #ECFDF5;
 }
 
-.notification-card.notif-read h3 {
-  color: #15803D;
-  font-weight: 500;
-}
+.notification-card.notif-read h3  { color: #15803D; font-weight: 500; }
+.notification-card.notif-read p   { color: #4B7A5A; }
+.notification-card.notif-read .notif-time { color: #86EFAC; }
 
-.notification-card.notif-read p {
-  color: #4B7A5A;
-}
-
-.notification-card.notif-read .notif-time {
-  color: #86EFAC;
-}
-
-/* ===== UNREAD PULSING DOT — indigo ===== */
 .unread-dot {
   position: absolute;
   top: 16px;
@@ -164,19 +141,10 @@
 }
 
 @keyframes unreadPulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.15);
-    box-shadow: 0 0 0 6px rgba(99, 102, 241, 0);
-  }
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5); }
+  50%       { opacity: 0.9; transform: scale(1.15); box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
 }
 
-/* ===== CARD TEXT DEFAULTS ===== */
 .notification-card h3 {
   font-size: 15px;
   font-weight: 600;
@@ -192,12 +160,12 @@
   line-height: 1.6;
 }
 
-/* ===== CARD FOOTER ===== */
 .notif-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .notif-time {
@@ -208,12 +176,8 @@
   gap: 4px;
 }
 
-.notif-time::before {
-  content: "🕐";
-  font-size: 11px;
-}
+.notif-time::before { content: "🕐"; font-size: 11px; }
 
-/* Mark as read button — indigo */
 .mark-read-btn {
   background: white;
   color: #6366F1;
@@ -248,17 +212,16 @@
 
 .empty-icon { width: 80px; height: 80px; margin-bottom: 20px; }
 .empty-icon svg { width: 100%; height: 100%; }
+.empty-title { font-size: 18px; font-weight: 700; color: #1E1B4B; margin: 0 0 8px 0; }
+.empty-sub   { font-size: 14px; color: #9CA3AF; margin: 0; line-height: 1.6; }
 
-.empty-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1E1B4B;
-  margin: 0 0 8px 0;
-}
-
-.empty-sub {
-  font-size: 14px;
-  color: #9CA3AF;
-  margin: 0;
-  line-height: 1.6;
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .dashboard-container { padding: 20px 12px; }
+  .dashboard-card { padding: 24px 18px; border-radius: 16px; }
+  .dashboard-title { font-size: 20px; }
+  .notification-card { padding: 14px 14px 12px 16px; }
+  .notification-card h3 { font-size: 14px; }
+  .notification-card p  { font-size: 13px; }
+  .mark-all-read-btn { font-size: 12px; padding: 6px 12px; }
 }

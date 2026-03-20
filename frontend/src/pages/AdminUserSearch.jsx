@@ -3,11 +3,11 @@ import axios from "../api/axiosInstance";
 import "./AdminUserSearch.css";
 
 function AdminUserSearch() {
-  const [name, setName] = useState("");
+  const [name, setName]               = useState("");
   const [departmentId, setDepartmentId] = useState("");
-  const [users, setUsers] = useState([]);
+  const [users, setUsers]             = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]         = useState(false);
 
   const getInitials = (n) => {
     if (!n) return "?";
@@ -104,8 +104,15 @@ function AdminUserSearch() {
                 <tr key={u.id}>
                   <td>
                     <div className="search-user-cell">
-                      <div className="search-user-avatar" style={{ background: avatarColor(u.fullName) }}>
-                        {getInitials(u.fullName)}
+                      {/* ✅ Show profile picture if available, else initials */}
+                      <div
+                        className="search-user-avatar"
+                        style={{ background: u.profilePicture ? "transparent" : avatarColor(u.fullName) }}
+                      >
+                        {u.profilePicture
+                          ? <img src={u.profilePicture} alt={u.fullName} className="avatar-table-img" />
+                          : getInitials(u.fullName)
+                        }
                       </div>
                       <span>{u.fullName}</span>
                     </div>
