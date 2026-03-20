@@ -40,9 +40,9 @@ function AdminLeaveRequests() {
   const approvedCount = leaves.filter(l => l.status === "Approved").length;
   const rejectedCount = leaves.filter(l => l.status === "Rejected").length;
 
-  const filtered     = leaves.filter(l => activeFilter === "All" || l.status === activeFilter);
-  const totalPages   = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pagedLeaves  = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const filtered    = leaves.filter(l => activeFilter === "All" || l.status === activeFilter);
+  const totalPages  = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pagedLeaves = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handleFilterChange = (label) => { setActiveFilter(label); setCurrentPage(1); };
 
@@ -68,14 +68,12 @@ function AdminLeaveRequests() {
     } catch { console.error("Failed to load users"); }
   };
 
-  // ── Fetch selected user's balance whenever dropdown changes ──────
+  // ── Fetch selected user's balance ─────────────────────────────────
   const fetchUserBalance = async (userId) => {
     if (!userId) { setSelectedUserBalance(null); return; }
     setBalanceLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/leave/balance/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res  = await fetch(`${BASE_URL}/api/leave/balance/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = res.ok ? await res.json() : null;
       setSelectedUserBalance(data);
     } catch {
@@ -85,9 +83,9 @@ function AdminLeaveRequests() {
     }
   };
 
-  // ── Handle user dropdown change ───────────────────────────────────
   const handleUserSelect = (userId) => {
     setBalanceUserId(userId);
+    setBalanceAmount("");
     fetchUserBalance(userId);
   };
 
@@ -131,18 +129,27 @@ function AdminLeaveRequests() {
     setLoadingId(null);
   };
 
-  const setBalance = async () => {
-    if (!balanceUserId || !balanceAmount) { toast.error("Select user and enter leave days"); return; }
+  // ── Shared balance update handler (set / add / subtract) ──────────
+  const updateBalance = async (action) => {
+    if (!balanceUserId)  { toast.error("Select a user first"); return; }
+    if (!balanceAmount)  { toast.error("Enter number of days"); return; }
+    const days = parseInt(balanceAmount);
+    if (isNaN(days) || days <= 0) { toast.error("Days must be a positive number"); return; }
+
     setSettingBalance(true);
     try {
       const res = await fetch(`${BASE_URL}/api/leave/set-balance`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: parseInt(balanceUserId), totalLeaves: parseInt(balanceAmount) })
+        body: JSON.stringify({ userId: parseInt(balanceUserId), days, action })
       });
-      if (!res.ok) { toast.error("Failed to set balance"); return; }
-      toast.success("Leave balance updated — user notified in real time");
-      // Refresh the displayed balance after setting it
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.message || "Failed to update balance"); return; }
+
+      const actionLabel = action === "add" ? "added to" : action === "subtract" ? "subtracted from" : "set for";
+      toast.success(`Leave balance ${actionLabel} user — notified in real time`);
+
+      // Refresh chips
       await fetchUserBalance(balanceUserId);
       setBalanceAmount("");
     } catch { toast.error("Server error"); }
@@ -166,7 +173,6 @@ function AdminLeaveRequests() {
     </>
   );
 
-  // ── Selected user's name for display ─────────────────────────────
   const selectedUserName = users.find(u => u.id === parseInt(balanceUserId))?.fullName || "";
 
   return (
@@ -174,10 +180,10 @@ function AdminLeaveRequests() {
       <Toaster position="top-right" />
       <h2>Leave Requests</h2>
 
-      {/* ── Set Leave Balance ── */}
+      {/* ── Manage Leave Balance ── */}
       <div className="leave-balance-card">
-        <h3>Set Annual Leave Balance</h3>
-        <p>Assign total annual leave days for a user. The user will be notified instantly.</p>
+        <h3>Manage Leave Balance</h3>
+        <p>Set, add, or subtract annual leave days for a user. The user will be notified instantly.</p>
 
         <div className="leave-balance-row">
           <select
@@ -188,20 +194,46 @@ function AdminLeaveRequests() {
             <option value="">Select User</option>
             {users.map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)}
           </select>
+
           <input
             type="number"
-            placeholder="Days (e.g. 18)"
+            placeholder="Days (e.g. 5)"
             value={balanceAmount}
             onChange={e => setBalanceAmount(e.target.value)}
             className="leave-balance-input"
-            min="0"
+            min="1"
           />
-          <button className="leave-balance-btn" onClick={setBalance} disabled={settingBalance}>
-            {settingBalance ? "Saving..." : "Set Balance"}
-          </button>
+
+          {/* Three action buttons */}
+          <div className="balance-action-btns">
+            <button
+              className="leave-balance-btn balance-btn-set"
+              onClick={() => updateBalance("set")}
+              disabled={settingBalance}
+              title="Set total leaves to this exact number"
+            >
+              Set
+            </button>
+            <button
+              className="leave-balance-btn balance-btn-add"
+              onClick={() => updateBalance("add")}
+              disabled={settingBalance}
+              title="Add days to current total"
+            >
+              + Add
+            </button>
+            <button
+              className="leave-balance-btn balance-btn-subtract"
+              onClick={() => updateBalance("subtract")}
+              disabled={settingBalance}
+              title="Subtract days from current total"
+            >
+              − Subtract
+            </button>
+          </div>
         </div>
 
-        {/* ── User balance preview — shown when a user is selected ── */}
+        {/* ── User balance preview ── */}
         {balanceUserId && (
           <div className="user-balance-preview">
             {balanceLoading ? (
@@ -308,7 +340,6 @@ function AdminLeaveRequests() {
         ))}
       </div>
 
-      {/* Pagination */}
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       {filtered.length > 0 && (

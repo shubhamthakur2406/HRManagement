@@ -978,6 +978,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "action": {
+            "type": "string",
+            "nullable": true
+          },
           "totalLeaves": {
             "type": "integer",
             "format": "int32"

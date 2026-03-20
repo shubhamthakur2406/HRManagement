@@ -14,7 +14,7 @@
   color: #1E1B4B;
 }
 
-/* ===== SET BALANCE CARD ===== */
+/* ===== BALANCE CARD ===== */
 .leave-balance-card {
   background: white;
   border-radius: 16px;
@@ -53,10 +53,9 @@
   box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
 }
 
+/* ── Base button style (shared by all 3) ── */
 .leave-balance-btn {
-  padding: 10px 22px;
-  background: linear-gradient(135deg, #7C3AED, #8B5CF6);
-  color: white;
+  padding: 10px 18px;
   border: none;
   border-radius: 10px;
   font-size: 14px;
@@ -65,15 +64,48 @@
   transition: all 0.2s ease;
   font-family: inherit;
   white-space: nowrap;
+  color: white;
 }
 
-.leave-balance-btn:hover {
+.leave-balance-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+/* ── Action button group wrapper ── */
+.balance-action-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Set — indigo/purple */
+.balance-btn-set {
+  background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+}
+.balance-btn-set:hover {
   background: linear-gradient(135deg, #6D28D9, #7C3AED);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
 }
 
-.leave-balance-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+/* Add — green */
+.balance-btn-add {
+  background: linear-gradient(135deg, #16A34A, #22C55E);
+}
+.balance-btn-add:hover {
+  background: linear-gradient(135deg, #15803D, #16A34A);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
+}
+
+/* Subtract — red */
+.balance-btn-subtract {
+  background: linear-gradient(135deg, #DC2626, #EF4444);
+}
+.balance-btn-subtract:hover {
+  background: linear-gradient(135deg, #B91C1C, #DC2626);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
 
 /* ===== USER BALANCE PREVIEW ===== */
 .user-balance-preview {
@@ -133,25 +165,16 @@
   opacity: 0.75;
 }
 
-.balance-chip-total {
-  background: #EEF2FF;
-  border-color: #C7D2FE;
-}
-.balance-chip-total .chip-value { color: #4F46E5; }
+.balance-chip-total     { background: #EEF2FF; border-color: #C7D2FE; }
+.balance-chip-total .chip-value,
 .balance-chip-total .chip-label { color: #4F46E5; }
 
-.balance-chip-used {
-  background: #FEF3C7;
-  border-color: #FDE68A;
-}
-.balance-chip-used .chip-value { color: #D97706; }
+.balance-chip-used      { background: #FEF3C7; border-color: #FDE68A; }
+.balance-chip-used .chip-value,
 .balance-chip-used .chip-label { color: #D97706; }
 
-.balance-chip-remaining {
-  background: #F0FDF4;
-  border-color: #BBF7D0;
-}
-.balance-chip-remaining .chip-value { color: #16A34A; }
+.balance-chip-remaining { background: #F0FDF4; border-color: #BBF7D0; }
+.balance-chip-remaining .chip-value,
 .balance-chip-remaining .chip-label { color: #16A34A; }
 
 /* ===== TABLE ===== */
@@ -276,12 +299,8 @@
 .leave-cards { display: none; }
 
 .leave-card {
-  background: white;
-  border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 12px;
-  border: 1px solid #E0E7FF;
-  border-left: 4px solid #8B5CF6;
+  background: white; border-radius: 14px; padding: 18px; margin-bottom: 12px;
+  border: 1px solid #E0E7FF; border-left: 4px solid #8B5CF6;
   box-shadow: 0 2px 12px rgba(79, 70, 229, 0.06);
 }
 
@@ -329,15 +348,8 @@
   transform: translateY(-1px);
 }
 
-.admin-pagination button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  border-color: #E5E7EB;
-  color: #9CA3AF;
-}
-
+.admin-pagination button:disabled { opacity: 0.4; cursor: not-allowed; border-color: #E5E7EB; color: #9CA3AF; }
 .admin-pagination span { font-weight: 600; color: #4B5563; font-size: 14px; }
-
 .admin-page-info { text-align: center; font-size: 13px; color: #9CA3AF; margin-top: 10px; margin-bottom: 0; }
 
 /* ===== RESPONSIVE ===== */
@@ -347,7 +359,8 @@
   .leave-balance-card { padding: 18px; }
   .leave-balance-row { flex-direction: column; align-items: stretch; }
   .leave-balance-select, .leave-balance-input { width: 100%; min-width: unset; }
-  .leave-balance-btn { width: 100%; text-align: center; }
+  .balance-action-btns { width: 100%; }
+  .leave-balance-btn { flex: 1; text-align: center; }
   .filter-tab { padding: 7px 12px; font-size: 12.5px; }
   .leave-table-wrapper { display: none; }
   .leave-cards { display: block; }

@@ -220,21 +220,57 @@ public class LeaveController : ControllerBase
         return Ok(new { message = "Leave rejected and balance restored" });
     }
 
-    // ── Admin: set balance ────────────────────────────────────────────
+    // ── Admin: set / add / subtract balance ───────────────────────────
     [Authorize(Roles = "Admin")]
     [HttpPost("set-balance")]
     public async Task<IActionResult> SetBalance([FromBody] SetLeaveBalanceDto dto)
     {
+        if (dto.Days <= 0)
+            return BadRequest(new { message = "Days must be greater than 0" });
+
         var balance = await _context.LeaveBalances.FirstOrDefaultAsync(b => b.UserId == dto.UserId);
 
         if (balance == null)
         {
-            balance = new LeaveBalance { UserId = dto.UserId, TotalLeaves = dto.TotalLeaves, UsedLeaves = 0 };
+            // No record yet — only "set" and "add" make sense; treat subtract as set to 0
+            var initial = dto.Action == "subtract" ? 0 : dto.Days;
+            balance = new LeaveBalance { UserId = dto.UserId, TotalLeaves = initial, UsedLeaves = 0 };
             _context.LeaveBalances.Add(balance);
         }
         else
         {
-            balance.TotalLeaves = dto.TotalLeaves;
+            switch (dto.Action?.ToLower())
+            {
+                case "add":
+                    balance.TotalLeaves += dto.Days;
+                    break;
+
+                case "subtract":
+                    var newTotal = balance.TotalLeaves - dto.Days;
+                    // Can't subtract below the number of days already used
+                    if (newTotal < balance.UsedLeaves)
+                        return BadRequest(new
+                        {
+                            message = $"Cannot reduce total below used leaves ({balance.UsedLeaves}). " +
+                                      $"Maximum you can subtract is {balance.TotalLeaves - balance.UsedLeaves} days."
+                        });
+                    // Can't go below 0
+                    if (newTotal < 0)
+                        return BadRequest(new { message = "Total leaves cannot go below 0" });
+
+                    balance.TotalLeaves = newTotal;
+                    break;
+
+                default: // "set"
+                    if (dto.Days < balance.UsedLeaves)
+                        return BadRequest(new
+                        {
+                            message = $"Cannot set total below used leaves ({balance.UsedLeaves}). " +
+                                      $"Minimum value is {balance.UsedLeaves} days."
+                        });
+                    balance.TotalLeaves = dto.Days;
+                    break;
+            }
         }
 
         await _context.SaveChangesAsync();
@@ -247,7 +283,14 @@ public class LeaveController : ControllerBase
                 remainingLeaves = balance.RemainingLeaves
             });
 
-        return Ok(new { message = "Leave balance updated" });
+        var actionWord = dto.Action?.ToLower() switch
+        {
+            "add"      => "added to",
+            "subtract" => "subtracted from",
+            _          => "set for"
+        };
+
+        return Ok(new { message = $"Leave balance {actionWord} user successfully" });
     }
 }
 
@@ -260,6 +303,14 @@ public class ApplyLeaveDto
 
 public class SetLeaveBalanceDto
 {
-    public int UserId      { get; set; }
-    public int TotalLeaves { get; set; }
+    public int    UserId { get; set; }
+    public int    Days   { get; set; }       // renamed from TotalLeaves — works for all 3 actions
+    public string Action { get; set; } = "set"; // "set" | "add" | "subtract"
+
+    // Keep TotalLeaves as alias so existing code still works
+    public int TotalLeaves
+    {
+        get => Days;
+        set => Days = value;
+    }
 }
