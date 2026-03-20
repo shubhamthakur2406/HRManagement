@@ -152,7 +152,7 @@
   border-left: 4px solid #6366F1;
   display: grid;
   grid-template-columns: 2.5fr 1fr auto;
-  align-items: center;
+  align-items: start;
   gap: 24px;
   box-shadow: 0 2px 16px rgba(79, 70, 229, 0.06);
   transition: 0.25s ease;
@@ -173,11 +173,68 @@
 .notification-content h4 { margin: 0; font-size: 16px; font-weight: 600; color: #1E1B4B; }
 .notification-content p  { margin: 6px 0 0 0; font-size: 13.5px; color: #6B7280; line-height: 1.5; }
 
-.notification-date { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+/* ===== SENT TO TAGS ===== */
+.notif-sent-to {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.notif-sent-to-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+.notif-sent-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.notif-sent-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* All users — indigo */
+.notif-sent-tag-all {
+  background: #EEF2FF;
+  color: #4338CA;
+  border: 1px solid #C7D2FE;
+}
+
+/* Specific user — green */
+.notif-sent-tag-user {
+  background: #F0FDF4;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+/* Department — purple */
+.notif-sent-tag-dept {
+  background: #F5F3FF;
+  color: #6D28D9;
+  border: 1px solid #DDD6FE;
+}
+
+.notification-date { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; padding-top: 2px; }
 .notif-time-relative { font-size: 13px; font-weight: 600; color: #4B5563; }
 .notif-time-full     { font-size: 11px; color: #9CA3AF; }
 
-.action-buttons { display: flex; gap: 10px; }
+.action-buttons { display: flex; gap: 10px; padding-top: 2px; }
 
 .edit-btn {
   background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A;
@@ -245,7 +302,7 @@
 @keyframes spin  { to { transform: rotate(360deg); } }
 @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-/* ===== PAGINATION ===== */
+/* PAGINATION */
 .admin-pagination {
   display: flex;
   justify-content: center;
@@ -281,11 +338,7 @@
   color: #9CA3AF;
 }
 
-.admin-pagination span {
-  font-weight: 600;
-  color: #4B5563;
-  font-size: 14px;
-}
+.admin-pagination span { font-weight: 600; color: #4B5563; font-size: 14px; }
 
 .admin-page-info {
   text-align: center;
@@ -295,7 +348,7 @@
   margin-bottom: 0;
 }
 
-/* ===== RESPONSIVE ===== */
+/* RESPONSIVE */
 @media (max-width: 768px) {
   .admin-wrapper { padding: 20px 16px; }
   .admin-card { padding: 24px 18px; margin-bottom: 28px; }

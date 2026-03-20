@@ -76,33 +76,42 @@ public class AdminController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        // Build full response with user/department names
+        var userNames = dto.UserIds != null && dto.UserIds.Any()
+            ? await _context.Users
+                .Where(u => dto.UserIds.Contains(u.Id))
+                .Select(u => u.FullName)
+                .ToListAsync()
+            : new List<string>();
+
+        var departmentNames = dto.DepartmentIds != null && dto.DepartmentIds.Any()
+            ? await _context.Departments
+                .Where(d => dto.DepartmentIds.Contains(d.Id))
+                .Select(d => d.DepartmentName)
+                .ToListAsync()
+            : new List<string>();
+
         var response = new
         {
-            id = notification.Id,
-            title = notification.Title,
-            message = notification.Message,
-            redirectUrl = notification.RedirectUrl,
-            createdAt = notification.CreatedAt,
-            sendToAll = notification.SendToAll,
-            userIds = dto.UserIds ?? new List<int>(),
-            departmentIds = dto.DepartmentIds ?? new List<int>()
+            id             = notification.Id,
+            title          = notification.Title,
+            message        = notification.Message,
+            redirectUrl    = notification.RedirectUrl,
+            createdAt      = notification.CreatedAt,
+            sendToAll      = notification.SendToAll,
+            userIds        = dto.UserIds ?? new List<int>(),
+            departmentIds  = dto.DepartmentIds ?? new List<int>(),
+            userNames,
+            departmentNames
         };
 
         try
         {
             if (dto.SendToAll)
-            {
-                await _hub.Clients.Group("User")
-                    .SendAsync("ReceiveNotification", response);
-            }
+                await _hub.Clients.Group("User").SendAsync("ReceiveNotification", response);
             else
-            {
                 foreach (var userId in targetUsers)
-                {
-                    await _hub.Clients.Group($"User_{userId}")
-                        .SendAsync("ReceiveNotification", response);
-                }
-            }
+                    await _hub.Clients.Group($"User_{userId}").SendAsync("ReceiveNotification", response);
 
             await _hub.Clients.All.SendAsync("ReceiveNotification", response);
         }
@@ -123,46 +132,54 @@ public class AdminController : ControllerBase
         if (notification == null)
             return NotFound("Notification not found");
 
-        notification.Title = dto.Title;
-        notification.Message = dto.Message;
+        notification.Title      = dto.Title;
+        notification.Message    = dto.Message;
         notification.RedirectUrl = dto.RedirectUrl;
-        notification.SendToAll = dto.SendToAll;
+        notification.SendToAll  = dto.SendToAll;
 
         var oldUsers = _context.NotificationUsers.Where(x => x.NotificationId == id);
-        var oldDepartments = _context.NotificationDepartments.Where(x => x.NotificationId == id);
+        var oldDepts = _context.NotificationDepartments.Where(x => x.NotificationId == id);
         _context.NotificationUsers.RemoveRange(oldUsers);
-        _context.NotificationDepartments.RemoveRange(oldDepartments);
+        _context.NotificationDepartments.RemoveRange(oldDepts);
         await _context.SaveChangesAsync();
 
         if (!dto.SendToAll)
         {
             if (dto.UserIds != null)
-            {
                 foreach (var userId in dto.UserIds)
                     _context.NotificationUsers.Add(new NotificationUser { NotificationId = id, UserId = userId });
-            }
 
             if (dto.DepartmentIds != null)
-            {
                 foreach (var deptId in dto.DepartmentIds)
                     _context.NotificationDepartments.Add(new NotificationDepartment { NotificationId = id, DepartmentId = deptId });
-            }
 
             await _context.SaveChangesAsync();
         }
 
+        var savedUserIds = await _context.NotificationUsers
+            .Where(x => x.NotificationId == id).Select(x => x.UserId).ToListAsync();
+        var savedDeptIds = await _context.NotificationDepartments
+            .Where(x => x.NotificationId == id).Select(x => x.DepartmentId).ToListAsync();
+
+        var userNames = savedUserIds.Any()
+            ? await _context.Users.Where(u => savedUserIds.Contains(u.Id)).Select(u => u.FullName).ToListAsync()
+            : new List<string>();
+        var departmentNames = savedDeptIds.Any()
+            ? await _context.Departments.Where(d => savedDeptIds.Contains(d.Id)).Select(d => d.DepartmentName).ToListAsync()
+            : new List<string>();
+
         var response = new
         {
-            id = notification.Id,
-            title = notification.Title,
-            message = notification.Message,
-            redirectUrl = notification.RedirectUrl,
-            createdAt = notification.CreatedAt,
-            sendToAll = notification.SendToAll,
-            userIds = await _context.NotificationUsers
-                .Where(x => x.NotificationId == id).Select(x => x.UserId).ToListAsync(),
-            departmentIds = await _context.NotificationDepartments
-                .Where(x => x.NotificationId == id).Select(x => x.DepartmentId).ToListAsync()
+            id             = notification.Id,
+            title          = notification.Title,
+            message        = notification.Message,
+            redirectUrl    = notification.RedirectUrl,
+            createdAt      = notification.CreatedAt,
+            sendToAll      = notification.SendToAll,
+            userIds        = savedUserIds,
+            departmentIds  = savedDeptIds,
+            userNames,
+            departmentNames
         };
 
         await _hub.Clients.All.SendAsync("ReceiveNotification", response);
@@ -194,6 +211,7 @@ public class AdminController : ControllerBase
         return Ok("Notification deleted successfully");
     }
 
+    // ✅ GET ALL NOTIFICATIONS — now includes userIds, departmentIds, userNames, departmentNames
     [HttpGet("notifications")]
     public async Task<IActionResult> GetAllNotifications()
     {
@@ -202,7 +220,51 @@ public class AdminController : ControllerBase
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
 
-        return Ok(notifications);
+        var result = new List<object>();
+
+        foreach (var n in notifications)
+        {
+            var userIds = await _context.NotificationUsers
+                .Where(x => x.NotificationId == n.Id)
+                .Select(x => x.UserId)
+                .ToListAsync();
+
+            var departmentIds = await _context.NotificationDepartments
+                .Where(x => x.NotificationId == n.Id)
+                .Select(x => x.DepartmentId)
+                .ToListAsync();
+
+            var userNames = userIds.Any()
+                ? await _context.Users
+                    .Where(u => userIds.Contains(u.Id))
+                    .Select(u => u.FullName)
+                    .ToListAsync()
+                : new List<string>();
+
+            var departmentNames = departmentIds.Any()
+                ? await _context.Departments
+                    .Where(d => departmentIds.Contains(d.Id))
+                    .Select(d => d.DepartmentName)
+                    .ToListAsync()
+                : new List<string>();
+
+            result.Add(new
+            {
+                id              = n.Id,
+                title           = n.Title,
+                message         = n.Message,
+                redirectUrl     = n.RedirectUrl,
+                createdAt       = n.CreatedAt,
+                sendToAll       = n.SendToAll,
+                isDeleted       = n.IsDeleted,
+                userIds,
+                departmentIds,
+                userNames,
+                departmentNames
+            });
+        }
+
+        return Ok(result);
     }
 
     // ✅ GET ALL USERS — includes ProfilePicture
@@ -242,12 +304,7 @@ public class AdminController : ControllerBase
             .Where(u => u.Id == id && u.Role == "User" && !u.IsDeleted)
             .Select(u => new
             {
-                u.Id,
-                u.FullName,
-                u.Email,
-                u.Address,
-                u.PhoneNumber,
-                u.DepartmentId
+                u.Id, u.FullName, u.Email, u.Address, u.PhoneNumber, u.DepartmentId
             })
             .FirstOrDefault();
 

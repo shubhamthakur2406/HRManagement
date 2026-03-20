@@ -5,7 +5,6 @@ import "./AdminNotifications.css";
 
 const PAGE_SIZE = 10;
 
-/* ── Reusable pagination bar ── */
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   if (totalPages <= 1) return null;
   return (
@@ -22,7 +21,7 @@ const AdminNotification = () => {
   const [message, setMessage]           = useState("");
   const [redirectUrl, setRedirectUrl]   = useState("");
   const [sendToAll, setSendToAll]       = useState(false);
-  const [selectedUsers, setSelectedUsers]           = useState([]);
+  const [selectedUsers, setSelectedUsers]             = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
 
   const [users, setUsers]               = useState([]);
@@ -40,8 +39,8 @@ const AdminNotification = () => {
   const formRef = useRef(null);
   const token   = localStorage.getItem("token");
 
-  const totalPages     = Math.max(1, Math.ceil(notifications.length / PAGE_SIZE));
-  const pagedNotifs    = notifications.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const totalPages  = Math.max(1, Math.ceil(notifications.length / PAGE_SIZE));
+  const pagedNotifs = notifications.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const timeAgo = (dateStr) => {
     const now = new Date(), date = new Date(dateStr);
@@ -137,10 +136,9 @@ const AdminNotification = () => {
         if (exists) return prev.map(n => n.id === data.id ? data : n);
         return [data, ...prev];
       });
-      // Go to page 1 after new notification so it's immediately visible
-      if (!editId) setCurrentPage(1);
 
-      showToast(editId ? "Notification Updated Successfully ✅" : "Notification Created Successfully ✅", "success");
+      if (!editId) setCurrentPage(1);
+      showToast(editId ? "Notification Updated ✅" : "Notification Sent ✅", "success");
       resetForm();
     } catch { showToast("Server error ❌", "error"); }
   };
@@ -152,12 +150,14 @@ const AdminNotification = () => {
   };
 
   const handleEdit = (n) => {
-    setTitle(n.title); setMessage(n.message);
+    setTitle(n.title);
+    setMessage(n.message);
     setRedirectUrl(n.redirectUrl || "");
     setSendToAll(n.sendToAll || false);
     setSelectedUsers(n.userIds || []);
     setSelectedDepartments(n.departmentIds || []);
-    setEditId(n.id); setEditTitle(n.title);
+    setEditId(n.id);
+    setEditTitle(n.title);
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -171,18 +171,29 @@ const AdminNotification = () => {
       });
       if (!res.ok) { showToast("Delete failed ❌", "error"); setIsDeleting(false); return; }
       setNotifications(prev => prev.filter(n => n.id !== deleteId));
-      // If current page becomes empty after delete, go back one page
       setCurrentPage(prev => {
         const newTotal = Math.max(1, Math.ceil((notifications.length - 1) / PAGE_SIZE));
         return prev > newTotal ? newTotal : prev;
       });
-      showToast("Notification Deleted Successfully 🗑️", "success");
+      showToast("Notification Deleted 🗑️", "success");
       setShowConfirm(false); setDeleteId(null);
     } catch { showToast("Server error ❌", "error"); }
     setIsDeleting(false);
   };
 
   const cancelDelete = () => { if (!isDeleting) { setShowConfirm(false); setDeleteId(null); } };
+
+  /* ── Build "Sent to" display string for a notification ── */
+  const getSentToInfo = (n) => {
+    if (n.sendToAll) return { label: "All Users", type: "all" };
+
+    const parts = [];
+    if (n.userNames && n.userNames.length > 0)         parts.push(...n.userNames.map(name => ({ text: name, type: "user" })));
+    if (n.departmentNames && n.departmentNames.length > 0) parts.push(...n.departmentNames.map(name => ({ text: name, type: "dept" })));
+
+    if (parts.length === 0) return null;
+    return { parts, type: "specific" };
+  };
 
   const userOptions       = users.map(u => ({ value: u.id, label: u.fullName }));
   const departmentOptions = departments.map(d => ({ value: d.id, label: d.departmentName }));
@@ -246,24 +257,49 @@ const AdminNotification = () => {
           </div>
         ) : (
           <>
-            {pagedNotifs.map(n => (
-              <div key={n.id} className={`admin-notification-card ${editId === n.id ? "currently-editing" : ""}`}>
-                <div className="notification-content">
-                  <h4>{n.title}</h4>
-                  <p>{n.message}</p>
-                </div>
-                <div className="notification-date" title={new Date(n.createdAt).toLocaleString()}>
-                  <span className="notif-time-relative">{timeAgo(n.createdAt)}</span>
-                  <span className="notif-time-full">{new Date(n.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" })}</span>
-                </div>
-                <div className="action-buttons">
-                  <button className="edit-btn" onClick={() => handleEdit(n)}>Edit</button>
-                  <button className="delete-btn" onClick={() => openDeleteModal(n.id)}>Delete</button>
-                </div>
-              </div>
-            ))}
+            {pagedNotifs.map(n => {
+              const sentTo = getSentToInfo(n);
+              return (
+                <div key={n.id} className={`admin-notification-card ${editId === n.id ? "currently-editing" : ""}`}>
+                  <div className="notification-content">
+                    <h4>{n.title}</h4>
+                    <p>{n.message}</p>
 
-            {/* Pagination */}
+                    {/* ── Sent to info ── */}
+                    {sentTo && (
+                      <div className="notif-sent-to">
+                        <span className="notif-sent-to-label">Sent to:</span>
+                        {sentTo.type === "all" ? (
+                          <span className="notif-sent-tag notif-sent-tag-all">🌐 All Users</span>
+                        ) : (
+                          <div className="notif-sent-tags">
+                            {sentTo.parts.map((p, i) => (
+                              <span
+                                key={i}
+                                className={`notif-sent-tag ${p.type === "dept" ? "notif-sent-tag-dept" : "notif-sent-tag-user"}`}
+                              >
+                                {p.type === "dept" ? "🏢 " : "👤 "}{p.text}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="notification-date" title={new Date(n.createdAt).toLocaleString()}>
+                    <span className="notif-time-relative">{timeAgo(n.createdAt)}</span>
+                    <span className="notif-time-full">{new Date(n.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" })}</span>
+                  </div>
+
+                  <div className="action-buttons">
+                    <button className="edit-btn" onClick={() => handleEdit(n)}>Edit</button>
+                    <button className="delete-btn" onClick={() => openDeleteModal(n.id)}>Delete</button>
+                  </div>
+                </div>
+              );
+            })}
+
             <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
             {notifications.length > 0 && (
