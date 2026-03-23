@@ -14,19 +14,15 @@ const UserDashboard = () => {
 
   const unreadCount = notifications.filter(n => !readIds.has(n.id)).length;
 
-  // ── Save to server (debounced 500ms) + notify Navbar instantly ──
+  // ── Save read IDs to server (debounced 500ms) + notify Navbar instantly ──
   const saveToServer = useCallback((ids) => {
-    // Fire event immediately so Navbar badge updates without waiting
     window.dispatchEvent(new CustomEvent("notif-read-updated", { detail: [...ids] }));
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
       fetch(`${BASE_URL}/api/user/read-notifications`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify([...ids])
       }).catch(() => {});
     }, 500);
@@ -55,12 +51,11 @@ const UserDashboard = () => {
   }, [notifications, saveToServer]);
 
   const timeAgo = (dateStr) => {
-    const now = new Date();
-    const date = new Date(dateStr);
+    const now = new Date(), date = new Date(dateStr);
     const diff = Math.floor((now - date) / 1000);
-    if (diff < 60) return "Just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 60)     return "Just now";
+    if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
     if (diff < 172800) return "Yesterday";
     return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   };
@@ -70,17 +65,11 @@ const UserDashboard = () => {
     const fetchAll = async () => {
       try {
         const [notifRes, readRes] = await Promise.all([
-          fetch(`${BASE_URL}/api/user/notifications`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          fetch(`${BASE_URL}/api/user/read-notifications`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          fetch(`${BASE_URL}/api/user/notifications`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${BASE_URL}/api/user/read-notifications`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
-
         const notifData = notifRes.ok ? await notifRes.json() : [];
         const readData  = readRes.ok  ? await readRes.json()  : [];
-
         setNotifications(notifData);
         setReadIds(new Set(readData));
       } catch (err) { console.error(err); }
@@ -88,7 +77,7 @@ const UserDashboard = () => {
     fetchAll();
   }, [token]);
 
-  // SignalR — new notifications arrive as unread
+  // ── SignalR ───────────────────────────────────────────────────────
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${BASE_URL}/notificationHub`, {
@@ -99,6 +88,7 @@ const UserDashboard = () => {
 
     connection.start().catch(err => console.error("SignalR Error:", err));
 
+    // New or updated notification arrives
     connection.on("ReceiveNotification", (notification) => {
       setNotifications(prev => {
         const exists = prev.some(n => n.id === notification.id);
@@ -107,8 +97,28 @@ const UserDashboard = () => {
       });
     });
 
+    // Notification deleted
     connection.on("DeleteNotification", (id) => {
       setNotifications(prev => prev.filter(n => n.id !== id));
+      // Also clean it from readIds if present
+      setReadIds(prev => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    });
+
+    // ── Admin edited a notification → mark it unread for this user ──
+    connection.on("NotificationMarkedUnread", (notificationId) => {
+      setReadIds(prev => {
+        if (!prev.has(notificationId)) return prev; // already unread, nothing to do
+        const next = new Set(prev);
+        next.delete(notificationId);
+        // Notify Navbar badge immediately
+        window.dispatchEvent(new CustomEvent("notif-read-updated", { detail: [...next] }));
+        return next;
+      });
     });
 
     return () => { connection.stop(); };

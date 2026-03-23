@@ -32,9 +32,15 @@ const AdminNotification = () => {
   const [editTitle, setEditTitle]       = useState("");
 
   const [toast, setToast]               = useState({ message: "", type: "" });
+
+  // ── Delete confirm modal ──────────────────────────────────────────
   const [showConfirm, setShowConfirm]   = useState(false);
   const [deleteId, setDeleteId]         = useState(null);
   const [isDeleting, setIsDeleting]     = useState(false);
+
+  // ── Edit confirm modal (warn about marking as unread) ─────────────
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting]       = useState(false);
 
   const formRef = useRef(null);
   const token   = localStorage.getItem("token");
@@ -57,11 +63,17 @@ const AdminNotification = () => {
     setTimeout(() => setToast({ message: "", type: "" }), 3000);
   };
 
+  // Escape key closes either modal
   useEffect(() => {
-    const handleKeyDown = (e) => { if (e.key === "Escape") { setShowConfirm(false); setDeleteId(null); } };
-    if (showConfirm) window.addEventListener("keydown", handleKeyDown);
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowConfirm(false);    setDeleteId(null);
+        setShowEditConfirm(false);
+      }
+    };
+    if (showConfirm || showEditConfirm) window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showConfirm]);
+  }, [showConfirm, showEditConfirm]);
 
   /* ── SignalR ── */
   useEffect(() => {
@@ -118,7 +130,20 @@ const AdminNotification = () => {
     } catch { showToast("Failed to load departments ❌", "error"); }
   };
 
-  const handleSubmit = async () => {
+  // ── Called when admin clicks "Update Notification" ────────────────
+  // If it's an edit → show the warning modal first
+  // If it's a new notification → submit directly
+  const handleSubmitClick = () => {
+    if (editId) {
+      setShowEditConfirm(true);  // show warning modal
+    } else {
+      submitForm();
+    }
+  };
+
+  // ── The actual API call ───────────────────────────────────────────
+  const submitForm = async () => {
+    setIsSubmitting(true);
     const url    = editId ? `https://localhost:7130/api/admin/notifications/${editId}` : "https://localhost:7130/api/admin/notifications";
     const method = editId ? "PUT" : "POST";
     try {
@@ -141,6 +166,8 @@ const AdminNotification = () => {
       showToast(editId ? "Notification Updated ✅" : "Notification Sent ✅", "success");
       resetForm();
     } catch { showToast("Server error ❌", "error"); }
+    setIsSubmitting(false);
+    setShowEditConfirm(false);
   };
 
   const resetForm = () => {
@@ -183,14 +210,12 @@ const AdminNotification = () => {
 
   const cancelDelete = () => { if (!isDeleting) { setShowConfirm(false); setDeleteId(null); } };
 
-  /* ── Build "Sent to" display string for a notification ── */
+  /* ── "Sent to" tags helper ── */
   const getSentToInfo = (n) => {
     if (n.sendToAll) return { label: "All Users", type: "all" };
-
     const parts = [];
-    if (n.userNames && n.userNames.length > 0)         parts.push(...n.userNames.map(name => ({ text: name, type: "user" })));
-    if (n.departmentNames && n.departmentNames.length > 0) parts.push(...n.departmentNames.map(name => ({ text: name, type: "dept" })));
-
+    if (n.userNames?.length)       parts.push(...n.userNames.map(name => ({ text: name, type: "user" })));
+    if (n.departmentNames?.length) parts.push(...n.departmentNames.map(name => ({ text: name, type: "dept" })));
     if (parts.length === 0) return null;
     return { parts, type: "specific" };
   };
@@ -198,12 +223,23 @@ const AdminNotification = () => {
   const userOptions       = users.map(u => ({ value: u.id, label: u.fullName }));
   const departmentOptions = departments.map(d => ({ value: d.id, label: d.departmentName }));
 
+  // Human-readable recipient summary for the warning modal
+  const editingNotif = notifications.find(n => n.id === editId);
+  const recipientSummary = editingNotif
+    ? editingNotif.sendToAll
+      ? "all users"
+      : [
+          ...(editingNotif.userNames || []),
+          ...(editingNotif.departmentNames || []).map(d => `${d} dept.`)
+        ].join(", ") || "the targeted users"
+    : "the targeted users";
+
   return (
     <div className="admin-wrapper">
 
       {toast.message && <div className={`toast ${toast.type}`}>{toast.message}</div>}
 
-      {/* Form card */}
+      {/* ── Form card ── */}
       <div className={`admin-card ${editId ? "editing-mode" : ""}`} ref={formRef}>
         <h2>{editId ? "Edit Notification" : "Send Notification"}</h2>
 
@@ -234,7 +270,9 @@ const AdminNotification = () => {
           onChange={selected => setSelectedDepartments(selected ? selected.map(s => s.value) : [])}
         />
 
-        <button onClick={handleSubmit}>{editId ? "Update Notification" : "Send Notification"}</button>
+        <button onClick={handleSubmitClick} disabled={isSubmitting}>
+          {isSubmitting ? "Saving..." : editId ? "Update Notification" : "Send Notification"}
+        </button>
 
         {editId && (
           <button onClick={resetForm} style={{ marginTop: "8px", background: "#F3F4F6", color: "#374151", border: "1.5px solid #E5E7EB" }}>
@@ -243,7 +281,7 @@ const AdminNotification = () => {
         )}
       </div>
 
-      {/* Notifications list */}
+      {/* ── Notifications list ── */}
       <div className="admin-list">
         <div className="admin-list-header">
           <h3>All Notifications</h3>
@@ -264,8 +302,6 @@ const AdminNotification = () => {
                   <div className="notification-content">
                     <h4>{n.title}</h4>
                     <p>{n.message}</p>
-
-                    {/* ── Sent to info ── */}
                     {sentTo && (
                       <div className="notif-sent-to">
                         <span className="notif-sent-to-label">Sent to:</span>
@@ -274,10 +310,7 @@ const AdminNotification = () => {
                         ) : (
                           <div className="notif-sent-tags">
                             {sentTo.parts.map((p, i) => (
-                              <span
-                                key={i}
-                                className={`notif-sent-tag ${p.type === "dept" ? "notif-sent-tag-dept" : "notif-sent-tag-user"}`}
-                              >
+                              <span key={i} className={`notif-sent-tag ${p.type === "dept" ? "notif-sent-tag-dept" : "notif-sent-tag-user"}`}>
                                 {p.type === "dept" ? "🏢 " : "👤 "}{p.text}
                               </span>
                             ))}
@@ -311,7 +344,37 @@ const AdminNotification = () => {
         )}
       </div>
 
-      {/* Delete confirm modal */}
+      {/* ══════════════════════════════════════════
+          EDIT CONFIRMATION MODAL
+          Warns admin that users who read this
+          notification will have it marked unread
+      ══════════════════════════════════════════ */}
+      {showEditConfirm && (
+        <div className="modal-overlay" onClick={() => !isSubmitting && setShowEditConfirm(false)}>
+          <div className="modern-modal edit-confirm-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-icon">✏️</div>
+            <h3>Update Notification?</h3>
+            <p>
+              Users who have already read this notification will have it
+              <strong style={{ color: "#D97706" }}> marked as unread</strong> instantly.
+            </p>
+            <div className="edit-confirm-recipients">
+              <span className="edit-confirm-recipients-label">Affects:</span>
+              <span className="edit-confirm-recipients-value">{recipientSummary}</span>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setShowEditConfirm(false)} disabled={isSubmitting}>
+                Cancel
+              </button>
+              <button className="btn-confirm-edit" onClick={submitForm} disabled={isSubmitting}>
+                {isSubmitting ? <span className="spinner"></span> : "Yes, Update"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete confirm modal ── */}
       {showConfirm && (
         <div className="modal-overlay" onClick={cancelDelete}>
           <div className="modern-modal" onClick={e => e.stopPropagation()}>
