@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
-import axios from "../api/axiosInstance";
+import axios from "../../api/axiosInstance";
 import toast, { Toaster } from "react-hot-toast";
 import "./AdminLeaveRequests.css";
 
@@ -204,58 +204,24 @@ function AdminLeaveRequests() {
             min="1"
           />
 
-          {/* Three action buttons */}
           <div className="balance-action-btns">
-            <button
-              className="leave-balance-btn balance-btn-set"
-              onClick={() => updateBalance("set")}
-              disabled={settingBalance}
-              title="Set total leaves to this exact number"
-            >
-              Set
-            </button>
-            <button
-              className="leave-balance-btn balance-btn-add"
-              onClick={() => updateBalance("add")}
-              disabled={settingBalance}
-              title="Add days to current total"
-            >
-              + Add
-            </button>
-            <button
-              className="leave-balance-btn balance-btn-subtract"
-              onClick={() => updateBalance("subtract")}
-              disabled={settingBalance}
-              title="Subtract days from current total"
-            >
-              − Subtract
-            </button>
+            <button className="leave-balance-btn balance-btn-set" onClick={() => updateBalance("set")} disabled={settingBalance} title="Set total leaves to this exact number">Set</button>
+            <button className="leave-balance-btn balance-btn-add" onClick={() => updateBalance("add")} disabled={settingBalance} title="Add days to current total">+ Add</button>
+            <button className="leave-balance-btn balance-btn-subtract" onClick={() => updateBalance("subtract")} disabled={settingBalance} title="Subtract days from current total">− Subtract</button>
           </div>
         </div>
 
-        {/* ── User balance preview ── */}
         {balanceUserId && (
           <div className="user-balance-preview">
             {balanceLoading ? (
               <span className="balance-loading">Loading balance...</span>
             ) : selectedUserBalance ? (
               <>
-                <span className="balance-preview-label">
-                  Current balance for <strong>{selectedUserName}</strong>:
-                </span>
+                <span className="balance-preview-label">Current balance for <strong>{selectedUserName}</strong>:</span>
                 <div className="balance-chips">
-                  <div className="balance-chip balance-chip-total">
-                    <span className="chip-value">{selectedUserBalance.totalLeaves}</span>
-                    <span className="chip-label">Total</span>
-                  </div>
-                  <div className="balance-chip balance-chip-used">
-                    <span className="chip-value">{selectedUserBalance.usedLeaves}</span>
-                    <span className="chip-label">Used</span>
-                  </div>
-                  <div className="balance-chip balance-chip-remaining">
-                    <span className="chip-value">{selectedUserBalance.remainingLeaves}</span>
-                    <span className="chip-label">Remaining</span>
-                  </div>
+                  <div className="balance-chip balance-chip-total"><span className="chip-value">{selectedUserBalance.totalLeaves}</span><span className="chip-label">Total</span></div>
+                  <div className="balance-chip balance-chip-used"><span className="chip-value">{selectedUserBalance.usedLeaves}</span><span className="chip-label">Used</span></div>
+                  <div className="balance-chip balance-chip-remaining"><span className="chip-value">{selectedUserBalance.remainingLeaves}</span><span className="chip-label">Remaining</span></div>
                 </div>
               </>
             ) : null}

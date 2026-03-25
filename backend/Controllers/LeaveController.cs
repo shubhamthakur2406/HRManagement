@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using backend.DTOs;
 
 namespace backend.Controllers;
 
@@ -295,4 +294,23 @@ public class LeaveController : ControllerBase
     }
 }
 
+public class ApplyLeaveDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate   { get; set; }
+    public string   Reason   { get; set; } = null!;
+}
 
+public class SetLeaveBalanceDto
+{
+    public int    UserId { get; set; }
+    public int    Days   { get; set; }       // renamed from TotalLeaves — works for all 3 actions
+    public string Action { get; set; } = "set"; // "set" | "add" | "subtract"
+
+    // Keep TotalLeaves as alias so existing code still works
+    public int TotalLeaves
+    {
+        get => Days;
+        set => Days = value;
+    }
+}
