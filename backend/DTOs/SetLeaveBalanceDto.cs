@@ -4,6 +4,12 @@
     {
 
         public int UserId { get; set; }
-        public int TotalLeaves { get; set; }
+        public int Days { get; set; }       
+        public string Action { get; set; } = "set";
+        public int TotalLeaves
+        {
+            get => Days;
+            set => Days = value;
+        }
     }
 }

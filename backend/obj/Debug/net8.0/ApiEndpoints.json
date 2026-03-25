@@ -293,7 +293,7 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "backend.Controllers.ApplyLeaveDto",
+        "Type": "backend.DTOs.ApplyLeaveDto",
         "IsRequired": true
       }
     ],
@@ -387,7 +387,7 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "backend.Controllers.SetLeaveBalanceDto",
+        "Type": "backend.DTOs.SetLeaveBalanceDto",
         "IsRequired": true
       }
     ],

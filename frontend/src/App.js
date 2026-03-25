@@ -2,17 +2,17 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import "./App.css";
 import Login from "./pages/Login";
-import Register from "./pages/admin/Register";
-import UserDashboard from "./pages/user/UserDashboard";
+import Register from "./pages/Register";
+import UserDashboard from "./pages/UserDashboard";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import AdminUserSearch from "./pages/admin/AdminUserSearch";
-import UserProfile from "./pages/user/UserProfile";
-import AdminUserList from "./pages/admin/AdminUserList";
-import AdminEditUserPage from "./pages/admin/AdminEditUserPage";
-import AdminNotifications from "./pages/admin/AdminNotifications";
-import AdminAttendanceRequests from "./pages/admin/AdminAttendanceRequests";
-import AdminLeaveRequests from "./pages/admin/AdminLeaveRequests";
-import UserAttendance from "./pages/user/UserAttendance";
+import AdminUserSearch from "./pages/AdminUserSearch";
+import UserProfile from "./pages/UserProfile";
+import AdminUserList from "./pages/AdminUserList";
+import AdminEditUserPage from "./pages/AdminEditUserPage";
+import AdminNotifications from "./pages/AdminNotifications";
+import AdminAttendanceRequests from "./pages/AdminAttendanceRequests";
+import AdminLeaveRequests from "./pages/AdminLeaveRequests";
+import UserAttendance from "./pages/UserAttendance";
 
 function AppContent() {
   const location = useLocation();
