@@ -81,3 +81,32 @@ CREATE TABLE LeaveRequests (
     FOREIGN KEY (UserId) REFERENCES Users(Id)
 );
 
+CREATE TABLE Payrolls (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL,
+
+    -- Salary Components
+    BasicSalary DECIMAL(18,2) NOT NULL DEFAULT 0,
+    HouseRentAllowance DECIMAL(18,2) NOT NULL DEFAULT 0,
+    TravelAllowance DECIMAL(18,2) NOT NULL DEFAULT 0,
+    MedicalAllowance DECIMAL(18,2) NOT NULL DEFAULT 0,
+    OtherAllowances DECIMAL(18,2) NOT NULL DEFAULT 0,
+
+    -- Deductions
+    ProvidentFund DECIMAL(18,2) NOT NULL DEFAULT 0,
+    TaxDeduction DECIMAL(18,2) NOT NULL DEFAULT 0,
+    OtherDeductions DECIMAL(18,2) NOT NULL DEFAULT 0,
+
+    -- Month & Status
+    Month NVARCHAR(7) NOT NULL,
+    Status NVARCHAR(20) NOT NULL DEFAULT 'Draft',
+
+    -- Timestamps
+    UpdatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+
+    -- Foreign Key
+    CONSTRAINT FK_Payroll_User FOREIGN KEY (UserId)
+    REFERENCES Users(Id)
+    ON DELETE CASCADE
+);

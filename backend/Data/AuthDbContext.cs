@@ -12,14 +12,15 @@ public partial class AuthDbContext : DbContext
     public AuthDbContext(DbContextOptions<AuthDbContext> options)
         : base(options) { }
 
-    public virtual DbSet<Department> Departments { get; set; }
-    public virtual DbSet<User> Users { get; set; }
-    public virtual DbSet<Notification> Notifications { get; set; }
-    public virtual DbSet<NotificationUser> NotificationUsers { get; set; }
+    public virtual DbSet<Department>             Departments             { get; set; }
+    public virtual DbSet<User>                   Users                   { get; set; }
+    public virtual DbSet<Notification>           Notifications           { get; set; }
+    public virtual DbSet<NotificationUser>       NotificationUsers       { get; set; }
     public virtual DbSet<NotificationDepartment> NotificationDepartments { get; set; }
-    public virtual DbSet<AttendanceRequest> AttendanceRequests { get; set; }
-    public virtual DbSet<LeaveBalance> LeaveBalances { get; set; }
-    public virtual DbSet<LeaveRequest> LeaveRequests { get; set; }
+    public virtual DbSet<AttendanceRequest>      AttendanceRequests      { get; set; }
+    public virtual DbSet<LeaveBalance>           LeaveBalances           { get; set; }
+    public virtual DbSet<LeaveRequest>           LeaveRequests           { get; set; }
+    public virtual DbSet<Payroll>                Payrolls                { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code.
@@ -52,7 +53,7 @@ public partial class AuthDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.UserId).IsUnique();
-            entity.Ignore(e => e.RemainingLeaves); // computed in C#, not DB
+            entity.Ignore(e => e.RemainingLeaves);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -64,6 +65,35 @@ public partial class AuthDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Status).HasMaxLength(20);
             entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Payroll>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // One record per user per month
+            entity.HasIndex(e => new { e.UserId, e.Month }).IsUnique();
+
+            // Computed properties — not stored in DB
+            entity.Ignore(e => e.GrossSalary);
+            entity.Ignore(e => e.TotalDeductions);
+            entity.Ignore(e => e.NetSalary);
+
+            entity.Property(e => e.BasicSalary).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.HouseRentAllowance).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.TravelAllowance).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.MedicalAllowance).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.OtherAllowances).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.ProvidentFund).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.TaxDeduction).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.OtherDeductions).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Month).HasMaxLength(7);   // "YYYY-MM"
+            entity.Property(e => e.Status).HasMaxLength(20);
+
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

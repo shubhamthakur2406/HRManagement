@@ -180,14 +180,11 @@ function Navbar() {
           {/* ════════════ ADMIN NAVBAR ════════════ */}
           {role === "Admin" && (
             <div className="admin-nav-trigger" ref={dropdownRef}>
-
-              {/* ── Trigger: icon + badge + chevron only (no text) ── */}
               <button
                 className={`admin-menu-btn ${adminDropOpen ? "admin-menu-btn-open" : ""}`}
                 onClick={() => setAdminDropOpen(prev => !prev)}
                 title="Menu"
               >
-                {/* Grid icon */}
                 <svg className="admin-menu-icon" viewBox="0 0 20 20" fill="currentColor">
                   <rect x="2"  y="2"  width="7" height="7" rx="1.5"/>
                   <rect x="11" y="2"  width="7" height="7" rx="1.5"/>
@@ -202,7 +199,6 @@ function Navbar() {
                 </svg>
               </button>
 
-              {/* ── Dropdown panel ── */}
               {adminDropOpen && (
                 <div className="admin-dropdown">
 
@@ -253,6 +249,22 @@ function Navbar() {
 
                   <div className="admin-dropdown-divider"/>
 
+                  {/* ── Payroll section ── */}
+                  <div className="admin-dropdown-section">
+                    <p className="admin-dropdown-label">Payroll</p>
+                    <button className={`admin-dropdown-item ${isActive("/admin/payroll") ? "admin-dropdown-item-active" : ""}`} onClick={() => navTo("/admin/payroll")}>
+                      <span className="admin-dropdown-icon">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                          <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd"/>
+                        </svg>
+                      </span>
+                      Manage Payroll
+                    </button>
+                  </div>
+
+                  <div className="admin-dropdown-divider"/>
+
                   {/* Logout */}
                   <div className="admin-dropdown-section">
                     <button className="admin-dropdown-item admin-dropdown-logout" onClick={logout}>
@@ -279,6 +291,9 @@ function Navbar() {
                 </button>
                 <button className={isActive("/user/attendance") ? "nav-active" : ""} onClick={() => navTo("/user/attendance")}>
                   Attendance
+                </button>
+                <button className={isActive("/user/payroll") ? "nav-active" : ""} onClick={() => navTo("/user/payroll")}>
+                  Payroll
                 </button>
               </div>
 

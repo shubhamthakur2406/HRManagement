@@ -1,0 +1,325 @@
+/* ===== USER PAYROLL PAGE ===== */
+
+.payroll-user-page {
+  min-height: 100vh;
+  background: #F5F7FF;
+  padding: 40px;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.payroll-user-header {
+  margin-bottom: 28px;
+}
+
+.payroll-user-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1E1B4B;
+  margin: 0 0 4px 0;
+}
+
+.payroll-user-sub {
+  font-size: 13.5px;
+  color: #6B7280;
+  margin: 0;
+}
+
+/* ── Layout: sidebar + main ── */
+.payroll-user-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* ── Month sidebar ── */
+.payroll-month-list {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E0E7FF;
+  box-shadow: 0 4px 16px rgba(79,70,229,0.07);
+  overflow: hidden;
+  position: sticky;
+  top: 88px;
+}
+
+.payroll-month-list-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #9CA3AF;
+  padding: 14px 16px 8px;
+  margin: 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.payroll-month-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+  font-family: inherit;
+  border-bottom: 1px solid #F9FAFB;
+}
+
+.payroll-month-item:last-child { border-bottom: none; }
+.payroll-month-item:hover { background: #F5F7FF; }
+
+.payroll-month-item-active {
+  background: #EEF2FF !important;
+}
+
+.payroll-month-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1E1B4B;
+}
+
+.payroll-month-net {
+  font-size: 12px;
+  color: #4F46E5;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.payroll-month-arrow {
+  width: 16px; height: 16px;
+  color: #C7D2FE;
+  flex-shrink: 0;
+}
+
+.payroll-month-item-active .payroll-month-arrow { color: #4F46E5; }
+
+/* ── Salary Slip ── */
+.salary-slip {
+  background: white;
+  border-radius: 18px;
+  border: 1px solid #E0E7FF;
+  box-shadow: 0 4px 24px rgba(79,70,229,0.08);
+  overflow: hidden;
+}
+
+/* Slip top bar */
+.slip-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.slip-company-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 2px;
+}
+
+.slip-doc-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+}
+
+.slip-top-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.slip-month-big {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+
+.btn-download-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: inherit;
+  backdrop-filter: blur(4px);
+}
+.btn-download-pdf:hover {
+  background: rgba(255,255,255,0.28);
+  border-color: rgba(255,255,255,0.8);
+}
+
+.pdf-icon { width: 15px; height: 15px; }
+
+/* Employee info strip */
+.slip-employee-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #EEF2FF;
+  border-bottom: 1px solid #E0E7FF;
+}
+
+.slip-emp-field {
+  background: white;
+  padding: 14px 20px;
+}
+
+.slip-emp-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9CA3AF;
+  margin-bottom: 4px;
+}
+
+.slip-emp-field span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E1B4B;
+}
+
+/* Two-column tables */
+.slip-tables {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.slip-table-wrap {
+  padding: 20px 24px;
+}
+
+.slip-table-wrap:first-child {
+  border-right: 1px solid #EEF2FF;
+}
+
+.slip-table-header {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid #F3F4F6;
+}
+
+.earnings-header   { color: #059669; }
+.deductions-header { color: #DC2626; }
+
+.slip-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.slip-table td {
+  padding: 8px 0;
+  font-size: 13.5px;
+  color: #374151;
+  border-bottom: 1px solid #F9FAFB;
+}
+
+.slip-table tbody tr:last-child td { border-bottom: none; }
+
+.slip-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.slip-deduction-val { color: #DC2626; }
+
+.slip-subtotal td {
+  padding: 10px 0 0 0;
+  font-weight: 700;
+  color: #1E1B4B;
+  border-top: 1.5px solid #E0E7FF;
+  border-bottom: none;
+}
+
+.slip-gross { color: #059669; }
+
+/* Net salary banner */
+.slip-net-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 24px 0;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #4F46E5, #6366F1);
+  border-radius: 14px;
+  margin: 20px 24px;
+}
+
+.slip-net-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+
+.slip-net-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: white;
+}
+
+.slip-footer-note {
+  text-align: center;
+  font-size: 12px;
+  color: #9CA3AF;
+  padding: 12px 24px 20px;
+}
+
+/* Empty & loading */
+.payroll-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 18px;
+  border: 1px solid #E0E7FF;
+  margin-top: 24px;
+}
+
+.payroll-empty-icon { font-size: 56px; margin-bottom: 16px; }
+.payroll-empty p    { font-size: 17px; font-weight: 600; color: #1E1B4B; margin-bottom: 8px; }
+.payroll-empty span { font-size: 14px; color: #9CA3AF; }
+
+.payroll-loading {
+  text-align: center;
+  padding: 80px 20px;
+  font-size: 16px;
+  color: #6B7280;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .payroll-user-layout { grid-template-columns: 1fr; }
+  .payroll-month-list  { position: static; }
+  .slip-tables         { grid-template-columns: 1fr; }
+  .slip-table-wrap:first-child { border-right: none; border-bottom: 1px solid #EEF2FF; }
+  .slip-employee-info  { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .payroll-user-page { padding: 20px 16px; }
+  .slip-top          { flex-direction: column; }
+  .slip-top-right    { align-items: flex-start; }
+  .slip-net-banner   { flex-direction: column; gap: 6px; text-align: center; }
+  .slip-net-value    { font-size: 22px; }
+}
