@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
 import { useNavigate } from "react-router-dom";
 import "./UserNotifications.css";
+import HRChatbot from "../components/HRChatbot";
 
 const BASE_URL = "https://localhost:7130";
 
@@ -186,6 +187,7 @@ const UserDashboard = () => {
         )}
 
       </div>
+      <HRChatbot />
     </div>
   );
 };

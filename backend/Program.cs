@@ -56,6 +56,13 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<JwtService>();
 
+// -------------------- HTTP CLIENT --------------------
+builder.Services.AddHttpClient("GeminiClient")
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    });
+
 // -------------------- CONTROLLERS --------------------
 builder.Services.AddControllers();
 
